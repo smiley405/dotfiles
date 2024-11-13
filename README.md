@@ -1,11 +1,10 @@
-[ my dotfiles ]
+# My dotfiles
 
-Neovim with 'takac/vim-hardtime' enabled by default.
+Neovim with 'takac/vim-hardtime' enabled by default!
 
+External dependencies:
+1. [rg](https://github.com/sharkdp/fd)
+2. [fd](https://github.com/BurntSushi/ripgrep)
 
-External dependencies::
-1. rg
-2. fd
-
-Terminal Using::
-1. wezterm
+Terminal Using:
+1. [wezterm](https://github.com/wez/wezterm)
