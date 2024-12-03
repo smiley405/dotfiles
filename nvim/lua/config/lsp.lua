@@ -30,11 +30,14 @@ local servers = {
 	'cssmodules_ls',
 	'html',
 	'eslint',
-	'jsonls'
+	'jsonls',
+	'volar'
 	--'gdscript',
 }
 
 local enable_haxe_lsp = true
+local enable_vue_lsp = true
+local mason_registry = require('mason-registry')
 
 require('mason').setup()
 
@@ -67,4 +70,28 @@ if enable_haxe_lsp then
 		capabilities = capabilities,
 		cmd = {'node', haxe_server_path},
 	})
+end
+
+if enable_vue_lsp then
+	-- @see https://kosu.me/blog/vue-nvim-lsp-config
+	local vue_language_server_path = mason_registry.get_package('vue-language-server'):get_install_path() .. '/node_modules/@vue/language-server' 
+
+	nvim_lsp['ts_ls'].setup {
+		init_options = {
+			plugins = {
+				{
+					name = '@vue/typescript-plugin',
+					location = vue_language_server_path,
+					languages = { 'vue' },
+				},
+			},
+		},
+		filetypes = {
+			'typescript',
+			'javascript',
+			'javascriptreact',
+			'typescriptreact',
+			'vue'
+		},
+	}
 end
