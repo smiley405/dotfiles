@@ -10,6 +10,7 @@ conform.setup({
 			javascriptreact = { "eslint", },
 			typescript = { "eslint", "tsserver",},
 			typescriptreact = { "eslint", "tsserver", },
+			lua =  { 'lua-ls' }
 		},
 		notify_on_error = true,
 	})
