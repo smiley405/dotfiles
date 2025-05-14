@@ -20,7 +20,7 @@ vim.opt.re = 0
 
 vim.opt.backupdir = vim.fn.expand('~/.vim/backup')
 vim.opt.directory = vim.fn.expand('~/.vim/swp')
-vim.opt.shadafile = 'NONE'
+-- vim.opt.shadafile = 'NONE'
 
 -- Some servers have issues with backup files, see #649.
 vim.opt.backup = false
