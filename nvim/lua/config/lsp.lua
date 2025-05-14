@@ -1,29 +1,7 @@
-local nvim_lsp = require('lspconfig')
+local lsp = require('lspconfig')
 local capabilities = require('cmp_nvim_lsp').default_capabilities()
-
-local on_attach = function(client, bufnr)
-	local opts = { noremap=true, silent=true }
-	vim.keymap.set('n', '<leader>e', vim.diagnostic.open_float, opts)
-	vim.keymap.set('n', '[d', vim.diagnostic.goto_prev, opts)
-	vim.keymap.set('n', ']d', vim.diagnostic.goto_next, opts)
-	-- vim.keymap.set('n', '<space>q', vim.diagnostic.setloclist, opts)
-
-	-- Enable completion triggered by <c-x><c-o>
-	vim.api.nvim_buf_set_option(bufnr, 'omnifunc', 'v:lua.vim.lsp.omnifunc')
-
-	-- Mappings.
-	-- See `:help vim.lsp.*` for documentation on any of the below functions
-	local bufopts = { noremap=true, silent=true, buffer=bufnr }
-	vim.keymap.set('n', 'gD', vim.lsp.buf.declaration, bufopts)
-	vim.keymap.set('n', 'gd', vim.lsp.buf.definition, bufopts)
-	vim.keymap.set('n', 'K', vim.lsp.buf.hover, bufopts)
-	vim.keymap.set('n', 'gi', vim.lsp.buf.implementation, bufopts)
-	-- quick fix
-	vim.keymap.set('n', '<space>ca', vim.lsp.buf.code_action, bufopts)
-	vim.keymap.set('n', 'gr', vim.lsp.buf.references, bufopts)
-	-- vim.keymap.set('n', '<space>f', function() vim.lsp.buf.format { async = true } end, bufopts)
-end
-
+local enable_haxe_lsp = true
+local enable_vue_lsp = true
 local servers = {
 	'ts_ls',
 	'cssls',
@@ -35,19 +13,14 @@ local servers = {
 	--'gdscript',
 }
 
-local enable_haxe_lsp = true
-local enable_vue_lsp = true
-local mason_registry = require('mason-registry')
-
 require('mason').setup()
 
 require('mason-lspconfig').setup{
 	ensure_installed = servers
 }
 
-for _, lsp in ipairs(servers) do
-	nvim_lsp[lsp].setup {
-		on_attach = on_attach,
+for _, name in ipairs(servers) do
+	lsp[name].setup {
 		capabilities = capabilities,
 	}
 end
@@ -65,11 +38,10 @@ if enable_haxe_lsp then
 	-- local haxe_server_path = vim.env.HOME .. '/.vscode-oss/extensions/nadako.vshaxe-2.31.0-universal/bin/server.js'
 	local haxe_server_path = vim.env.HOME .. '/.vim/vshaxe/bin/server.js'
 
-	nvim_lsp['haxe_language_server'].setup({
-		on_attach = on_attach,
-		capabilities = capabilities,
-		cmd = {'node', haxe_server_path},
-	})
+	lsp['haxe_language_server'].setup({
+			capabilities = capabilities,
+			cmd = {'node', haxe_server_path},
+		})
 end
 
 if enable_vue_lsp then
@@ -77,7 +49,7 @@ if enable_vue_lsp then
 	-- https://github.com/mason-org/mason.nvim/blob/main/CHANGELOG.md#packageget_install_path-has-been-removed
 	local vue_language_server_path = vim.fn.expand('$MASON/packages/vue-language-server/node_modules/@vue/language-server')
 
-	nvim_lsp['ts_ls'].setup {
+	lsp['ts_ls'].setup {
 		init_options = {
 			plugins = {
 				{
@@ -96,3 +68,23 @@ if enable_vue_lsp then
 		},
 	}
 end
+
+vim.api.nvim_create_autocmd('LspAttach', {
+		desc = 'LSP actions',
+		callback = function(event)
+			local opts = {buffer = event.buf, remap=false}
+			-- Mappings.
+			-- See `:help vim.lsp.*` for documentation on any of the below functions
+			vim.keymap.set('n', '<leader>e', '<cmd>lua vim.diagnostic.open_float()<cr>', opts)
+			vim.keymap.set('n', '[d', '<cmd>lua vim.diagnostic.goto_prev()<cr>', opts)
+			vim.keymap.set('n', ']d', '<cmd>lua vim.diagnostic.goto_next()<cr>', opts)
+			vim.keymap.set('n', 'gd', '<cmd>lua vim.lsp.buf.definition()<cr>', opts)
+			vim.keymap.set('n', '<leader>vrn', '<cmd>lua vim.lsp.buf.rename()<cr>', opts)
+			vim.keymap.set('n', 'K', '<cmd>lua vim.lsp.buf.hover()<cr>', opts)
+			vim.keymap.set('n', '<space>ca', '<cmd>lua vim.lsp.buf.code_action()<cr>', opts)
+			vim.keymap.set('n', 'gr', '<cmd>lua vim.lsp.buf.references()<cr>', opts)
+			-- Enable completion triggered by <c-x><c-o>
+			vim.api.nvim_buf_set_option(opts.buffer, 'omnifunc', 'v:lua.vim.lsp.omnifunc')
+		end,
+	})
+
