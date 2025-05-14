@@ -74,7 +74,8 @@ end
 
 if enable_vue_lsp then
 	-- @see https://kosu.me/blog/vue-nvim-lsp-config
-	local vue_language_server_path = mason_registry.get_package('vue-language-server'):get_install_path() .. '/node_modules/@vue/language-server' 
+	-- https://github.com/mason-org/mason.nvim/blob/main/CHANGELOG.md#packageget_install_path-has-been-removed
+	local vue_language_server_path = vim.fn.expand('$MASON/packages/vue-language-server/node_modules/@vue/language-server')
 
 	nvim_lsp['ts_ls'].setup {
 		init_options = {

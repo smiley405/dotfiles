@@ -10,9 +10,7 @@ local config = {
 	'menu',
 	'rooter',
 	'lualine',
-	'git',
 	'autopairs',
-	'lsp',
 	'completion',
 	'undotree',
 	'comment',
@@ -22,7 +20,9 @@ local config = {
 	'scrollview',
 	'colorizer',
 	'oil',
-	'outline'
+	'outline',
+	'git',
+	'lsp'
 }
 
 for _, name in ipairs(config) do
