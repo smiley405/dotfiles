@@ -1,6 +1,6 @@
 -- see the following like to setup lsp
 -- https://lsp-zero.netlify.app/docs/getting-started.html
-local lsp = require('lspconfig')
+local lspconfig = require('lspconfig')
 local enable_haxe_lsp = true
 local enable_vue_lsp = true
 local servers = {
@@ -36,15 +36,31 @@ vim.api.nvim_create_autocmd('LspAttach', {
 
 -- Add cmp_nvim_lsp capabilities settings to lspconfig
 -- This should be executed before you configure any language server
-local lspconfig_defaults = lsp.util.default_config
+local lspconfig_defaults = lspconfig.util.default_config
 lspconfig_defaults.capabilities = vim.tbl_deep_extend(
 	'force',
 	lspconfig_defaults.capabilities,
 	require('cmp_nvim_lsp').default_capabilities()
 )
 
+require('mason').setup()
+require('mason-lspconfig').setup({
+	-- https://lsp-zero.netlify.app/docs/guide/integrate-with-mason-nvim.html
+	automatic_enable = {
+		exclude = { 'lua_ls', 'ts_ls' }
+	},
+	ensure_installed = servers,
+	handlers = {
+		-- this first function is the "default handler"
+			-- it applies to every language server without a "custom handler"
+			function(server_name)
+				lspconfig[server_name].setup({})
+			end,
+	},
+})
+
 -- for fix: https://github.com/neovim/neovim/issues/21686
-lsp['lua_ls'].setup {
+lspconfig['lua_ls'].setup {
   settings = {
     Lua = {
       runtime = {
@@ -71,7 +87,6 @@ lsp['lua_ls'].setup {
   },
 }
 
-
 if enable_haxe_lsp then
 	-- for haxe: since there is an issue with Mason::
 	-- manually copy the haxe_language_server extension from vscode
@@ -85,7 +100,7 @@ if enable_haxe_lsp then
 	-- local haxe_server_path = vim.env.HOME .. '/.vscode-oss/extensions/nadako.vshaxe-2.31.0-universal/bin/server.js'
 	local haxe_server_path = vim.env.HOME .. '/.vim/vshaxe/bin/server.js'
 
-	lsp['haxe_language_server'].setup({
+	lspconfig['haxe_language_server'].setup({
 			cmd = {'node', haxe_server_path},
 		})
 end
@@ -95,7 +110,7 @@ if enable_vue_lsp then
 	-- https://github.com/mason-org/mason.nvim/blob/main/CHANGELOG.md#packageget_install_path-has-been-removed
 	local vue_language_server_path = vim.fn.expand('$MASON/packages/vue-language-server/node_modules/@vue/language-server')
 
-	lsp['ts_ls'].setup {
+	lspconfig['ts_ls'].setup {
 		init_options = {
 			plugins = {
 				{
@@ -114,18 +129,4 @@ if enable_vue_lsp then
 		},
 	}
 end
-
-require('mason').setup()
-require('mason-lspconfig').setup({
-	-- https://lsp-zero.netlify.app/docs/guide/integrate-with-mason-nvim.html
-    automatic_enable = true,
-	ensure_installed = servers,
-	handlers = {
-		-- this first function is the "default handler"
-			-- it applies to every language server without a "custom handler"
-			function(server_name)
-				require('lspconfig')[server_name].setup({})
-			end,
-	},
-})
 
