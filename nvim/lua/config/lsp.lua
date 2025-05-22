@@ -11,7 +11,7 @@ local servers = {
 	'eslint',
 	'jsonls',
 	'lua_ls',
-	'volar'
+	'vue_ls'
 	--'gdscript',
 }
 
