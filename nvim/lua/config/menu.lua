@@ -38,7 +38,6 @@ vim.cmd([[
 	unmenu! *
 
 	"Edit
-	menu Edit.Eslint\ Fix\ All :EslintFixAll<CR>
 	menu Edit.NeoFormat :Neoformat<CR>
 	menu Edit.Remove\ trailing\ whitespace\ -end\ of\ each\ line :%s/\s\+$//e<CR>
 	menu Edit.Remove\ trailing\ whitespace\ -start\ of\ each\ line :%s/^\s\+//e<CR>
