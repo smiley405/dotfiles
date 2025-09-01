@@ -20,6 +20,7 @@ end })
 Plug 'junegunn/fzf.vim'
 Plug 'sheerun/vim-polyglot'
 Plug 'samoshkin/vim-mergetool'
+Plug 'justinmk/vim-gtfo'
 
 -- nvim utils
 Plug 'nvim-lua/plenary.nvim'
