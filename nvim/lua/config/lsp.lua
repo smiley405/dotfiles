@@ -1,6 +1,6 @@
 -- see the following like to setup lsp
 -- https://lsp-zero.netlify.app/docs/getting-started.html
-local lspconfig = require('lspconfig')
+local uv = vim.uv ---@type table
 local enable_haxe_lsp = true
 local enable_vue_lsp = true
 local servers = {
@@ -36,10 +36,9 @@ vim.api.nvim_create_autocmd('LspAttach', {
 
 -- Add cmp_nvim_lsp capabilities settings to lspconfig
 -- This should be executed before you configure any language server
-local lspconfig_defaults = lspconfig.util.default_config
-lspconfig_defaults.capabilities = vim.tbl_deep_extend(
+local capabilities = vim.tbl_deep_extend(
 	'force',
-	lspconfig_defaults.capabilities,
+	vim.lsp.protocol.make_client_capabilities(),
 	require('cmp_nvim_lsp').default_capabilities()
 )
 
@@ -54,13 +53,14 @@ require('mason-lspconfig').setup({
 		-- this first function is the "default handler"
 			-- it applies to every language server without a "custom handler"
 			function(server_name)
-				lspconfig[server_name].setup({})
+				vim.lsp.config(server_name, {})
+				vim.lsp.enable(server_name)
 			end,
 	},
 })
 
 -- for fix: https://github.com/neovim/neovim/issues/21686
-lspconfig['lua_ls'].setup {
+vim.lsp.config('lua_ls', {
   settings = {
     Lua = {
       runtime = {
@@ -85,7 +85,9 @@ lspconfig['lua_ls'].setup {
       },
     },
   },
-}
+})
+
+vim.lsp.enable('lua_ls')
 
 if enable_haxe_lsp then
 	-- for haxe: since there is an issue with Mason::
@@ -100,9 +102,13 @@ if enable_haxe_lsp then
 	-- local haxe_server_path = vim.env.HOME .. '/.vscode-oss/extensions/nadako.vshaxe-2.31.0-universal/bin/server.js'
 	local haxe_server_path = vim.env.HOME .. '/.vim/vshaxe/bin/server.js'
 
-	lspconfig['haxe_language_server'].setup({
+	if uv.fs_access(haxe_server_path, 'r') then
+		vim.lsp.config('haxe_language_server', {
 			cmd = {'node', haxe_server_path},
 		})
+		vim.lsp.enable('haxe_language_server')
+	end
+
 end
 
 if enable_vue_lsp then
@@ -110,7 +116,7 @@ if enable_vue_lsp then
 	-- https://github.com/mason-org/mason.nvim/blob/main/CHANGELOG.md#packageget_install_path-has-been-removed
 	local vue_language_server_path = vim.fn.expand('$MASON/packages/vue-language-server/node_modules/@vue/language-server')
 
-	lspconfig['ts_ls'].setup {
+	vim.lsp.config('ts_ls', {
 		init_options = {
 			plugins = {
 				{
@@ -127,6 +133,7 @@ if enable_vue_lsp then
 			'typescriptreact',
 			'vue'
 		},
-	}
+	})
+	vim.lsp.enable('ts_ls')
 end
 
