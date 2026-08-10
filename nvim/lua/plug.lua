@@ -26,7 +26,6 @@ Plug 'justinmk/vim-gtfo'
 Plug 'nvim-lua/plenary.nvim'
 Plug 'windwp/nvim-autopairs'
 Plug 'norcalli/nvim-colorizer.lua'
-Plug 'kyazdani42/nvim-web-devicons'
 Plug 'lewis6991/gitsigns.nvim'
 Plug 'numToStr/Comment.nvim'
 Plug 'kevinhwang91/nvim-bqf'
@@ -35,6 +34,11 @@ Plug 'nvim-lualine/lualine.nvim'
 Plug 'petertriho/nvim-scrollbar'
 Plug 'stevearc/oil.nvim'
 Plug 'hedyhli/outline.nvim'
+
+-- tree file explorer
+Plug 'nvim-neo-tree/neo-tree.nvim'
+Plug 'MunifTanjim/nui.nvim'
+Plug 'nvim-tree/nvim-web-devicons'
 
 -- lsp
 Plug 'neovim/nvim-lspconfig'

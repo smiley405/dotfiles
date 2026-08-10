@@ -17,7 +17,10 @@ end
 -- status bar
 wezterm.on('update-status', function(window, pane)
 	-- "Wed Mar 3 08:14"
+	if not pane then return end
 	local tab = pane:tab()
+	-- panes such as the debug overlay aren't attached to a tab
+	if not tab then return end
 	local total_panes = '  x ' .. #(tab:panes())
 
 	window:set_left_status(wezterm.format {
