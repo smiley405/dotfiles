@@ -38,6 +38,7 @@ vim.cmd([[
 	unmenu! *
 
 	"Edit
+	menu Edit.LSP\ Format :lua vim.lsp.buf.format({ async = false })<CR>
 	menu Edit.NeoFormat :Neoformat<CR>
 	menu Edit.Remove\ trailing\ whitespace\ -end\ of\ each\ line :%s/\s\+$//e<CR>
 	menu Edit.Remove\ trailing\ whitespace\ -start\ of\ each\ line :%s/^\s\+//e<CR>
