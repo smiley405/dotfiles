@@ -3,7 +3,8 @@ local Plug = vim.fn['plug#']
 vim.call('plug#begin')
 
 -- colorscheme
-Plug 'Mofiqul/vscode.nvim'
+-- Plug 'Mofiqul/vscode.nvim'
+Plug 'folke/tokyonight.nvim'
 
 -- vim utils
 Plug 'takac/vim-hardtime'
