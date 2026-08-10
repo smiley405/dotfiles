@@ -22,7 +22,8 @@ local config = {
 	'oil',
 	'outline',
 	'git',
-	'lsp'
+	'lsp',
+	'neotree'
 }
 
 for _, name in ipairs(config) do
