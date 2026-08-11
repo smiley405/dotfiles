@@ -7,14 +7,18 @@
 local repo = vim.fn.fnamemodify(vim.fn.resolve(vim.fn.stdpath('config')), ':h')
 local script = repo .. '/bin/yazi-wez'
 
--- wezterm runs on the windows side of WSL
-local wezterm = 'wezterm.exe'
+-- wezterm.exe on PATH means WSL with interop; native linux has plain wezterm
+local wezterm = vim.fn.executable('wezterm.exe') == 1 and 'wezterm.exe' or 'wezterm'
 
--- WEZTERM_PANE is not forwarded into WSL, so ask the mux instead. Cached:
--- nvim does not change pane during a session.
+-- Cached: nvim does not change pane during a session.
 local pane_id
 
 local function nvim_pane()
+	if pane_id then return pane_id end
+
+	-- native panes export WEZTERM_PANE; WSL does not forward it, so there we ask
+	-- the mux which pane has focus instead
+	pane_id = tonumber(vim.env.WEZTERM_PANE or '')
 	if pane_id then return pane_id end
 
 	local res = vim.system({ wezterm, 'cli', 'list-clients', '--format', 'json' },

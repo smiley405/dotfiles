@@ -10,12 +10,20 @@
 #       Bound in yazi/keymap.toml: open paths in nvim -- the one we came from
 #       inside a `pick` session, otherwise a fresh nvim in a split or tab.
 #
-# wezterm runs windows-side, hence wezterm.exe and the explicit `bash -lc`
-# (the default domain is cmd.exe).
+# Under WSL wezterm runs windows-side, hence wezterm.exe and the explicit
+# `bash -lc` (the default domain is cmd.exe); on native linux the cli is plain
+# wezterm and the wrapper is harmless.
 
 set -euo pipefail
 
-WEZTERM=${WEZTERM_CLI:-wezterm.exe}
+# wezterm.exe on PATH means WSL with interop; native linux has plain wezterm
+if [ -n "${WEZTERM_CLI:-}" ]; then
+	WEZTERM=$WEZTERM_CLI
+elif command -v wezterm.exe >/dev/null 2>&1; then
+	WEZTERM=wezterm.exe
+else
+	WEZTERM=wezterm
+fi
 
 die() { printf 'yazi-wez: %s\n' "$*" >&2; exit 1; }
 
