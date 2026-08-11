@@ -9,32 +9,31 @@ local excluded_filetypes = {
 	'oil',
 }
 
--- lua_ls does not resolve this module's return table through its `local M = {}`
--- indirection and reports `setup` as undefined; it exists (scrollbar/init.lua).
+-- false positive: lua_ls cannot see through this module's `local M = {}`
+-- indirection. setup exists (scrollbar/init.lua).
 ---@diagnostic disable-next-line: undefined-field
 require('scrollbar').setup({
-		excluded_filetypes = excluded_filetypes,
-		handle = {
-			text = "┆",
+	excluded_filetypes = excluded_filetypes,
+	handle = {
+		text = "┆",
+	},
+	handlers = {
+		cursor = false,
+		diagnostic = false,
+		gitsigns = true, -- Requires gitsigns
+		handle = true,
+		search = false, -- Requires hlslens
+		ale = false, -- Requires ALE
+	},
+	marks = {
+		GitAdd = {
+			text = "│",
 		},
-		handlers = {
-			cursor = false,
-			diagnostic = false,
-			gitsigns = true, -- Requires gitsigns
-			handle = true,
-			search = false, -- Requires hlslens
-			ale = false, -- Requires ALE
+		GitChange = {
+			text = "│",
 		},
-		marks = {
-			GitAdd = {
-				text = "│",
-			},
-			GitChange = {
-				text = "│",
-			},
-			GitDelete = {
-				text = "-",
-			},
-		}
-	})
-
+		GitDelete = {
+			text = "-",
+		},
+	}
+})

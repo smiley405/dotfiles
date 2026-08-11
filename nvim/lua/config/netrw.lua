@@ -62,11 +62,9 @@ vim.cmd([[
 	augroup END
 ]])
 
--- These three shadow the global <leader>, / . / / (config/keymap.lua) so they
--- act on the file under the cursor rather than the open one. Moved out of
--- s:init_netrw() because vimscript's nnoremap has no desc field, and without
--- one which-key falls back to the global label -- which describes the wrong
--- behaviour inside netrw.
+-- Shadow the global <leader>, / . / / (config/keymap.lua) to act on the file
+-- under the cursor. Lua, not nnoremap, so they can carry a desc -- otherwise
+-- which-key shows the global label, which is wrong inside netrw.
 vim.api.nvim_create_autocmd('FileType', {
 	group = vim.api.nvim_create_augroup('my_netrw_keys', { clear = true }),
 	pattern = 'netrw',

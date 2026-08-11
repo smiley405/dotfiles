@@ -55,10 +55,8 @@ vim.cmd([[
 	augroup END
 ]])
 
--- Lua rather than `nnoremap` in the block above so these can carry a desc:
--- netrw shadows all three buffer-locally with an under-the-cursor variant, and
--- which-key gives a wk.add() spec entry precedence over a mapping's own desc --
--- so a spec label here would describe the wrong behaviour inside netrw.
+-- Lua, not `nnoremap` above, so these can carry a desc. netrw shadows all three
+-- buffer-locally, and a which-key spec entry would override that desc.
 vim.keymap.set('n', '<leader>,', '<cmd>call CopyEchoOpenedFileName()<CR>',
 	{ silent = true, desc = 'Copy file name' })
 vim.keymap.set('n', '<leader>.', '<cmd>call CopyEchoFullOpenedFilePath()<CR>',

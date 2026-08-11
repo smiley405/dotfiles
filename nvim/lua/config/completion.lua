@@ -1,7 +1,5 @@
--- The completion stack is registered with `on = {}` in plug.lua, i.e. held out
--- of 'runtimepath' until asked for, so that its after/plugin/ files do not run
--- during startup. This is the ask. Everything below is unchanged by it -- the
--- plugins are fully loaded by the time the requires on the next lines run.
+-- The completion stack is held out of 'runtimepath' by `on = {}` in plug.lua so
+-- its after/plugin/ files do not run at startup; this is where it gets loaded.
 vim.fn['plug#load'](
 	'nvim-cmp',
 	'cmp-nvim-lsp',
@@ -20,8 +18,7 @@ local compare = require('cmp.config.compare')
 require('luasnip.loaders.from_lua').lazy_load()
 require('luasnip.loaders.from_vscode').lazy_load()
 
--- noinsert (instead of noselect) => first entry is preselected like VSCode,
--- but nothing is written into the buffer until you confirm.
+-- noinsert: first entry is preselected, but nothing is written until confirm
 vim.opt.completeopt = { 'menu', 'menuone', 'noinsert' }
 
 -- VSCode codicons (needs a nerd font)
@@ -101,11 +98,8 @@ vim.api.nvim_create_autocmd('ColorScheme', {
 	callback = set_cmp_highlights,
 })
 
--- True when the cursor sits just after a member-access operator: `foo.`, `foo?.`,
--- `foo->`, `foo::`. In that position the only valid candidates are members of
--- whatever is on the left, which the language server knows and nothing else
--- does -- so the word-scraping sources are suppressed there (see entry_filter
--- on `buffer` and `luasnip` below).
+-- True just after `.`, `?.`, `->` or `::`. Only the language server knows what
+-- is valid there, so the word-scraping sources are filtered out (see below).
 local function after_member_access()
 	local line = vim.api.nvim_get_current_line()
 	local col = vim.api.nvim_win_get_cursor(0)[2]
@@ -123,11 +117,8 @@ local function has_words_before()
 	return text:sub(col, col):match('%s') == nil
 end
 
--- cmp annotates `cmp.setup` as `cmp.SetupProperty | fun(c)` -- a union of a
--- table of sub-setters and a callable. lua_ls can only narrow to one branch at
--- a time, so it reads the plain call here as the table branch (and `.cmdline`
--- below as the function branch) and flags both. Verified correct at runtime:
--- `cmp.setup` is a table with a __call metamethod plus a `cmdline` field.
+-- false positive: `cmp.setup` is annotated as a union (table | callable) and
+-- lua_ls can only narrow to one branch at a time. It is both at runtime.
 ---@diagnostic disable-next-line: redundant-parameter
 cmp.setup({
 	snippet = {
@@ -176,9 +167,7 @@ cmp.setup({
 				item.abbr = vim.fn.strcharpart(item.abbr, 0, max_abbr - 1) .. '…'
 			end
 
-			-- VSCode's dim right-hand column is the signature / import source.
-			-- cmp already put the server's labelDetails there, so keep it and
-			-- only fall back to the kind word when the server sent nothing.
+			-- keep the server's labelDetails; fall back to the kind word
 			local detail = item.menu
 			if not detail or detail == '' then
 				detail = kind
@@ -247,9 +236,7 @@ cmp.setup({
 			c = cmp.mapping.close(),
 		},
 
-		-- VSCode: Enter accepts the highlighted entry (acceptSuggestionOnEnter).
-		-- Swap `select = true` for `select = false` if you'd rather have <CR>
-		-- only accept entries you explicitly moved to.
+		-- set select = false for <CR> to only accept entries you moved to
 		['<CR>'] = cmp.mapping.confirm({
 			behavior = cmp.ConfirmBehavior.Insert,
 			select = true,
@@ -277,38 +264,30 @@ cmp.setup({
 		end, { 'i', 's' }),
 	}),
 
-	-- one flat list, ranked by priority — VSCode doesn't hide path/buffer
-	-- results just because the language server returned something
+	-- one flat list ranked by priority; LSP results do not hide the rest
 	sources = cmp.config.sources({
 		{ name = 'nvim_lsp',                priority = 1000 },
 		{ name = 'nvim_lsp_signature_help', priority = 900 },
 		{
 			name = 'luasnip',
 			priority = 750,
-			-- `styles.` offered ~130 snippets before this; none of them are members
+			-- `styles.` offered ~130 snippets before this
 			entry_filter = function() return not after_member_access() end,
 		},
-		{ name = 'path',                    priority = 500 },
+		{ name = 'path', priority = 500 },
 		{
 			name = 'buffer',
 			priority = 250,
 			keyword_length = 3,
 			max_item_count = 10,
-			-- Typing `styles.` used to return 2 real class names from the server
-			-- followed by 10 words scraped out of the buffer -- `div`, `from`,
-			-- `const`, `import`, `className`. None of them are members of
-			-- anything, and VSCode shows none of them either.
+			-- otherwise `styles.` returns 2 real class names plus 10 buffer
+			-- words (`div`, `from`, `const`, `import`, ...)
 			entry_filter = function() return not after_member_access() end,
 			option = {
-				-- Was nvim_list_bufs(), i.e. every buffer in the session --
-				-- including unloaded ones and the scratch buffers oil, neo-tree
-				-- and the terminal leave behind. That is the main source of
-				-- duplicate entries sitting next to the LSP results (the same
-				-- identifier harvested out of several buffers at once) and it
-				-- re-indexes the whole set on each keystroke.
-				--
-				-- Visible buffers only, real files only, and skip anything big
-				-- enough to stall the popup while it is being tokenised.
+				-- Visible real files only, under 512KB. nvim_list_bufs() (the
+				-- default) also scrapes unloaded buffers and the scratch ones
+				-- oil/neo-tree/terminal leave behind, and re-indexes the lot
+				-- on every keystroke.
 				get_bufnrs = function()
 					local bufs = {}
 					for _, win in ipairs(vim.api.nvim_list_wins()) do
@@ -334,7 +313,7 @@ if ok then
 	cmp.event:on('confirm_done', cmp_autopairs.on_confirm_done())
 end
 
--- Use buffer source for `/` and `?` (if you enabled `native_menu`, this won't work anymore).
+-- buffer source for `/` and `?`
 ---@diagnostic disable-next-line: undefined-field
 cmp.setup.cmdline({ '/', '?' }, {
 	mapping = cmp.mapping.preset.cmdline(),
@@ -343,7 +322,7 @@ cmp.setup.cmdline({ '/', '?' }, {
 	}
 })
 
--- Use cmdline & path source for ':' (if you enabled `native_menu`, this won't work anymore).
+-- cmdline + path source for `:`
 ---@diagnostic disable-next-line: undefined-field
 cmp.setup.cmdline(':', {
 	mapping = cmp.mapping.preset.cmdline(),

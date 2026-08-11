@@ -10,18 +10,17 @@ vim.cmd([[
 	augroup END
 ]])
 
--- Lua rather than `noremap` in the block above so it can carry a desc: oil
--- shadows this key buffer-locally, and which-key gives a wk.add() spec entry
--- precedence over a mapping's own desc -- so a spec label here would show
--- 'Close quickfix' inside oil buffers too. Mode '' matches :noremap (n/v/o).
+-- Lua, not `noremap` above, so it can carry a desc: oil shadows this key, and a
+-- which-key spec entry would label it 'Close quickfix' there too.
+-- Mode '' matches :noremap (n/v/o).
 vim.keymap.set('', '<leader>q', '<cmd>ccl<CR>',
 	{ silent = true, desc = 'Close quickfix' })
 
 require('bqf').setup({
 	auto_enable = true,
 	auto_resize_height = true, -- highly recommended enable
-	-- bqf marks every field of its config classes as required, but setup()
-	-- merges over defaults, so a partial table is the intended usage
+	-- false positive: bqf marks every field required, but setup() merges
+	-- over defaults, so a partial table is the intended usage
 	---@diagnostic disable-next-line: missing-fields
 	preview = {
 		win_height = 12,

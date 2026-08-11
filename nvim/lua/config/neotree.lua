@@ -7,10 +7,8 @@ require("neo-tree").setup({
 	enable_git_status = true,
 	enable_diagnostics = true,
 
-	-- renaming or moving a file in the tree used to silently break every
-	-- import of it. Hand the old/new path to snacks, which sends
-	-- workspace/willRenameFiles so the language server rewrites those imports
-	-- first -- VSCode's 'update imports on file move'.
+	-- Update imports on move/rename. snacks sends workspace/willRenameFiles so
+	-- the language server rewrites every import before the file moves.
 	event_handlers = {
 		{
 			event = "file_moved",
@@ -32,43 +30,28 @@ require("neo-tree").setup({
 		"qf",
 	},
 
-	-- Applies to the file tree, which the per-source `window.mappings`
-	-- below are merged over.
+	-- Base mappings; the per-source `window.mappings` below merge over these.
 	window = {
 		mappings = {
-			-- filesystem is the only source now, but neo-tree's own defaults
-			-- still bind these -- and with nothing to switch to they just
-			-- re-navigate filesystem onto itself, i.e. a full rebuild for
-			-- nothing. Deleting our entries was not enough; they have to be
-			-- overridden.
+			-- Unbind source switching: filesystem is the only source, so these
+			-- just rebuild it from scratch onto itself. Must be overridden --
+			-- deleting the entries leaves neo-tree's defaults in place.
 			["<"] = "noop",
 			[">"] = "noop",
 
-			-- neo-tree binds <space> to toggle_node by default, and <space>
-			-- is the leader key -- so inside the tree it shadowed every
-			-- <leader> mapping and which-key's popup never opened there.
-			--
-			-- Nothing replaces it: `open` calls toggle_node for directory
-			-- nodes (sources/common/commands.lua), so o and <cr> already
-			-- expand and collapse folders. This only removes the duplicate,
-			-- and leaves neo-tree's <Tab> (multi-select) alone.
+			-- Free up <space>: neo-tree binds it to toggle_node, which shadows
+			-- every <leader> mapping inside the tree. Nothing replaces it --
+			-- o and <cr> already expand folders.
 			["<space>"] = "noop",
 		},
 	},
 
-	-- Sources
+	-- Sources: file tree only. The other three are covered better elsewhere
+	-- (<leader>o symbols, <leader>fb buffers, <leader>gc git), and switching
+	-- rebuilt the target source from scratch on every press.
 	--
-	-- Just the file tree, no tab bar. Switching sources was never cheap:
-	-- < and > rebuild the target source from scratch every press
-	-- (sources/common/commands.lua), and document_symbols additionally
-	-- blocked on a textDocument/documentSymbol request, rendering nothing
-	-- until the server answered. The other three are covered better
-	-- elsewhere -- <leader>o for symbols (outline.nvim), <leader>fb for
-	-- buffers (fzf), <leader>gc for git (fugitive).
-	--
-	-- source_selector is omitted entirely, so no winbar is drawn.
-	-- enable_git_status above is unrelated and stays: that is the git
-	-- symbol next to each file, not a tab.
+	-- source_selector omitted, so no winbar is drawn. enable_git_status above
+	-- is unrelated -- that is the git symbol per file, not a tab.
 	sources = {
 		"filesystem",
 	},
@@ -89,9 +72,8 @@ require("neo-tree").setup({
 
 		-- Explorer filtering
 		filtered_items = {
-			-- show filtered items (gitignored, .ignore matches, .DS_Store)
-			-- from the start, dimmed rather than as normal entries so they
-			-- still read as ignored. H toggles them back off per session.
+			-- Show gitignored/.ignore/.DS_Store from the start, but dimmed.
+			-- H toggles them back off for the session.
 			visible = true,
 			hide_dotfiles = false,
 			hide_gitignored = true,
@@ -103,9 +85,7 @@ require("neo-tree").setup({
 			width = 35,
 
 			mappings = {
-				-- Navigation
-				-- open toggles the node when it is a directory, so these
-				-- cover what <space> used to do (see window.mappings above)
+				-- Navigation (open toggles directories -- see window.mappings)
 				["<cr>"] = "open",
 				["o"] = "open",
 				["<2-LeftMouse>"] = "open",
@@ -204,12 +184,11 @@ require("neo-tree").setup({
 
 -- Neo-tree keymaps
 
--- Toggle Explorer
+-- Toggle Explorer.
 --
--- <leader>nn, not <leader>n: a mapping sitting on the same key as the nf/no
--- prefix means which-key's popup opens at 300ms and then 'timeoutlen' fires
--- the toggle out from under it while you are still reading. With <leader>n
--- left as a pure prefix, the popup waits for the next key instead.
+-- <leader>nn, not <leader>n: a mapping on the same key as the nf/no prefix
+-- would fire on 'timeoutlen' while the which-key popup is still being read.
+-- Keeping <leader>n a pure prefix makes the popup wait for the next key.
 vim.keymap.set("n", "<leader>nn", "<cmd>Neotree toggle<CR>", {
 	silent = true,
 	desc = "Neo-tree: toggle explorer",

@@ -15,8 +15,7 @@ local servers = {
 	--'gdscript',
 }
 
--- configured by hand further down (they need settings the automatic pass would
--- not apply), so they are kept out of the generated allowlist below
+-- configured by hand further down; kept out of the allowlist below
 local manual_servers = { 'lua_ls', 'ts_ls' }
 
 vim.api.nvim_create_autocmd('LspAttach', {
@@ -31,14 +30,12 @@ vim.api.nvim_create_autocmd('LspAttach', {
 		-- Mappings.
 		-- See `:help vim.lsp.*` for documentation on any of the below functions
 		map('<leader>e', '<cmd>lua vim.diagnostic.open_float()<cr>', 'Diagnostics (float)')
-		-- goto_prev/goto_next are deprecated and removed in 0.13; jump() is the
-		-- replacement and takes the direction as a count
+		-- goto_prev/goto_next are gone in 0.13; jump() takes a count instead
 		map('[d', function() vim.diagnostic.jump({ count = -1 }) end, 'Previous diagnostic')
 		map(']d', function() vim.diagnostic.jump({ count = 1 }) end, 'Next diagnostic')
 		map('gd', '<cmd>lua vim.lsp.buf.definition()<cr>', 'Go to definition')
 		map('<leader>vrn', '<cmd>lua vim.lsp.buf.rename()<cr>', 'Rename symbol')
-		-- border used to come from a vim.lsp.with() handler wrapper (deprecated);
-		-- it is passed per-call now -- see the note in config/diagnostic.lua
+		-- border is passed per-call; vim.lsp.with() is deprecated
 		map('K', function() vim.lsp.buf.hover({ border = 'rounded' }) end, 'Hover docs')
 		map('<space>ca', '<cmd>lua vim.lsp.buf.code_action()<cr>', 'Code action')
 		map('gr', '<cmd>lua vim.lsp.buf.references()<cr>', 'References')
@@ -47,14 +44,8 @@ vim.api.nvim_create_autocmd('LspAttach', {
 	end,
 })
 
--- Add cmp_nvim_lsp capabilities settings to lspconfig
--- This should be executed before you configure any language server.
---
--- The '*' entry is merged into *every* server config (the ones mason enables
--- automatically as well as the hand-rolled ones below), so all servers
--- advertise the same completion capabilities: snippetSupport (placeholders in
--- function signatures), resolveSupport (docs + auto-import edits resolved
--- lazily) and preselect/labelDetails support.
+-- '*' merges into every server config, so all of them advertise the same cmp
+-- completion capabilities. Must run before any server is configured.
 vim.lsp.config('*', {
 	capabilities = vim.tbl_deep_extend(
 		'force',
@@ -63,25 +54,15 @@ vim.lsp.config('*', {
 	),
 })
 
--- NOTE: config for any server mason enables automatically has to be registered
--- *before* mason-lspconfig.setup() below. That call ends in vim.lsp.enable(),
--- and since config/lsp.lua now loads on the deferred pass (see init.lua) there
--- are already buffers open when it does -- so enable() resolves each config and
--- attaches on the spot. A vim.lsp.config() placed after it arrives too late for
--- the first buffer of the session. Hand-configured servers (manual_servers) are
--- exempt: mason does not enable those, so they stay further down.
+-- IMPORTANT: config for mason-auto-enabled servers must be registered *before*
+-- mason-lspconfig.setup() below. That call ends in vim.lsp.enable(), and since
+-- this module loads deferred (see init.lua) buffers are already open, so
+-- enable() resolves configs and attaches on the spot. manual_servers are exempt.
 
--- cssmodules_ls used to start for *every* javascript and typescript buffer,
--- because that is the filetype list it ships with -- ~61MB of node per project,
--- sitting next to ts_ls's own ~580MB, in projects that may not contain a single
--- CSS module. It also registers a second `nvim_lsp` source in cmp (cmp-nvim-lsp
--- creates one per attached client), so it is the remaining candidate for
--- duplicate completion entries.
---
--- It only has anything to say about `styles.foo` in a file that imports a
--- *.module.css, so it is now gated on the project actually having one. The
--- answer is cached per root: the scan is bounded to depth 5 and skips the
--- directories that make a recursive walk expensive.
+-- cssmodules_ls ships filetypes = js/jsx/ts/tsx, so it started for every such
+-- buffer -- ~61MB of node per project, and a second `nvim_lsp` cmp source
+-- (cmp-nvim-lsp creates one per client). It is only useful where a
+-- *.module.css exists, so gate on that. Cached per root; bounded scan.
 local has_css_modules = {}
 
 local function project_uses_css_modules(root)
@@ -110,7 +91,7 @@ end
 vim.lsp.config('cssmodules_ls', {
 	root_dir = function(bufnr, on_dir)
 		local root = vim.fs.root(bufnr, { 'package.json', '.git' })
-		-- not calling on_dir at all is how a root_dir declines to attach
+		-- declining to call on_dir is how root_dir refuses to attach
 		if root and project_uses_css_modules(root) then
 			on_dir(root)
 		end
@@ -119,17 +100,9 @@ vim.lsp.config('cssmodules_ls', {
 
 require('mason').setup()
 require('mason-lspconfig').setup({
-	-- https://lsp-zero.netlify.app/docs/guide/integrate-with-mason-nvim.html
-	-- mason-lspconfig v2 dropped `handlers`; servers are enabled through
-	-- `automatic_enable`, and the two hand-configured ones are enabled below
-	-- because they need extra settings.
-	--
-	-- This has to be an allowlist, not `{ exclude = ... }`: given `exclude`,
-	-- mason-lspconfig enables *every installed package* minus the exclusions,
-	-- so any server left in mason from an old experiment gets switched on
-	-- silently. That is how tailwindcss -- never listed in `servers` -- ended up
-	-- attaching to every css and typescript buffer alongside cssls/ts_ls.
-	-- A plain array is treated as "enable only these".
+	-- Must stay a plain array ("enable only these"), never `{ exclude = ... }` --
+	-- `exclude` enables every *installed* package minus the exclusions, which
+	-- silently switches on leftovers from old experiments.
 	automatic_enable = vim.tbl_filter(function(name)
 		return not vim.tbl_contains(manual_servers, name)
 	end, servers),
@@ -180,12 +153,9 @@ if enable_haxe_lsp then
 	local haxe_server_path = vim.env.HOME .. '/.vim/vshaxe/bin/server.js'
 
 	if uv.fs_access(haxe_server_path, 'r') then
-		-- nvim-lspconfig only ships haxe_language_server in the deprecated
-		-- `lua/lspconfig/configs/` directory, which Nvim 0.11+ does not read
-		-- (and upstream will delete). So there is nothing to merge `cmd` into:
-		-- filetypes/root_dir have to be spelled out here, otherwise
-		-- vim.lsp.enable() has no filetype to attach on and the server never
-		-- starts. Ported from lspconfig's old default_config.
+		-- lspconfig only ships this in its deprecated lua/lspconfig/configs/ dir,
+		-- which nvim 0.11+ ignores -- so filetypes/root_dir must be spelled out
+		-- here or vim.lsp.enable() has nothing to attach on.
 		vim.lsp.config('haxe_language_server', {
 			cmd = { 'node', haxe_server_path },
 			filetypes = { 'haxe' },
@@ -203,8 +173,7 @@ if enable_haxe_lsp then
 					executable = 'haxe',
 				},
 			},
-			-- haxe projects need an hxml; hand the first one we find to the
-			-- server as its display arguments (was `on_new_config` in lspconfig)
+			-- haxe needs an hxml; pass the first one found as display arguments
 			before_init = function(params, config)
 				local opts = params.initializationOptions or {}
 				if opts.displayArguments then
