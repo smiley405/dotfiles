@@ -185,18 +185,27 @@ cmp.setup({
 	},
 
 	window = {
-		-- borderless, solid background: the VSCode suggest widget
+		-- VSCode suggest widget in noice's colours. col_offset pulls the 3-cell
+		-- kind field left of the cursor; the border is drawn outside the content
+		-- area, so it does not disturb that. Also used by the `/`, `?` and `:`
+		-- menus.
 		completion = {
-			winhighlight = 'Normal:Pmenu,FloatBorder:Pmenu,CursorLine:PmenuSel,Search:None',
+			border = 'rounded',
+			winhighlight = 'Normal:Pmenu,FloatBorder:FloatBorder,CursorLine:PmenuSel,Search:None',
 			col_offset = -3,
 			side_padding = 0,
 			scrollbar = true,
 		},
-		documentation = cmp.config.window.bordered({
-			winhighlight = 'Normal:Pmenu,FloatBorder:Pmenu,CursorLine:PmenuSel,Search:None',
-			max_width = 80,
+		-- Matches noice's `hover` view, so this and the hover/signature floats
+		-- read as one widget. Not cmp.config.window.bordered(): that takes the
+		-- border from 'winborder' (unset here, so 'none') and drops max_width.
+		documentation = {
+			border = 'rounded',
+			winhighlight = 'Normal:NormalFloat,FloatBorder:FloatBorder,CursorLine:PmenuSel,Search:None',
+			max_width = 120,
 			max_height = 20,
-		}),
+			zindex = 1001,
+		},
 	},
 
 	-- inline preview of the selected entry, like VSCode's ghost text

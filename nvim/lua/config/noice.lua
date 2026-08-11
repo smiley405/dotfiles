@@ -34,6 +34,16 @@ noice.setup({
 		mini = {
 			position = { row = -2 },
 		},
+
+		-- Native ins-completion (<C-n>, <C-p>, <C-x>...) renders through this
+		-- view. It ships border padding but no style, so nui drew it flat; only
+		-- cmdline_popupmenu got a border, from the command_palette preset.
+		popupmenu = {
+			border = {
+				style = 'rounded',
+				padding = { 0, 1 },
+			},
+		},
 	},
 
 	presets = {
