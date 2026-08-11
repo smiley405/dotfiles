@@ -59,6 +59,8 @@ Plug 'nvim-tree/nvim-web-devicons'
 Plug 'neovim/nvim-lspconfig'
 Plug 'williamboman/mason.nvim'
 Plug 'williamboman/mason-lspconfig.nvim'
+-- feeds lua_ls only the plugin dirs this config require()s
+Plug 'folke/lazydev.nvim'
 
 -- cmp
 --

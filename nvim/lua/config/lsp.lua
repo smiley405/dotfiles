@@ -109,6 +109,11 @@ require('mason-lspconfig').setup({
 	ensure_installed = servers,
 })
 
+-- lazydev adds a plugin's dir to lua_ls's workspace.library only once this
+-- config require()s from it, instead of handing over all of 'runtimepath'.
+-- It appends to the library declared below, so that key must stay unset.
+require('lazydev').setup()
+
 -- for fix: https://github.com/neovim/neovim/issues/21686
 vim.lsp.config('lua_ls', {
 	settings = {
@@ -124,10 +129,6 @@ vim.lsp.config('lua_ls', {
 					'vim',
 					'require'
 				},
-			},
-			workspace = {
-				-- Make the server aware of Neovim runtime files
-				library = vim.api.nvim_get_runtime_file("", true),
 			},
 			-- Do not send telemetry data containing a randomized but unique identifier
 			telemetry = {
