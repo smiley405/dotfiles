@@ -29,6 +29,15 @@ gs.setup({
 	end
 })
 
+-- diff3_mixed: the two sides on top, the merged result below
+require('diffview').setup({
+	view = {
+		merge_tool = {
+			layout = 'diff3_mixed',
+		},
+	},
+})
+
 -- takes a rev too, e.g. :DiffviewOpen HEAD~2
 vim.keymap.set('n', '<leader>gd', '<cmd>DiffviewOpen<CR>',
 	{ silent = true, desc = 'Diff working tree' })
@@ -81,12 +90,20 @@ vim.api.nvim_create_autocmd('User', {
 	end,
 })
 
-vim.cmd([[
-let g:mergetool_layout = 'rl,m'
-let g:mergetool_prefer_revision = 'local'
-nmap <leader>gm <plug>(MergetoolToggle)
+-- guarded, since :DiffviewOpen on a clean index just opens an empty diff
+vim.api.nvim_create_user_command('GitMergeTool', function()
+	-- U = unmerged: the paths git wants resolved
+	local conflicts = vim.fn.systemlist({ 'git', 'diff', '--name-only', '--diff-filter=U' })
+	if vim.v.shell_error ~= 0 then
+		vim.notify('Not a git repository', vim.log.levels.WARN)
+	elseif #conflicts == 0 then
+		vim.notify('No merge conflicts', vim.log.levels.INFO)
+	else
+		vim.cmd('DiffviewOpen')
+	end
+end, { desc = 'Resolve merge conflicts' })
 
-" to resolve merge, use :diffget or :diffput
-" to resolve only selected line or range,
-" y to yank and p to paste the selected commit line or range
-]])
+-- in the merge view: ]x [x move, <leader>co/ct/cb/ca take ours/theirs/base/all,
+-- dx drops it (upper-case for the whole file). Write the middle window to stage.
+vim.keymap.set('n', '<leader>gm', '<cmd>GitMergeTool<CR>',
+	{ silent = true, desc = 'Resolve merge conflicts' })

@@ -20,7 +20,7 @@ vim.cmd([[
 	menu Git.Line:\ Commits\ History :.DiffviewFileHistory %<CR>
 	menu Git.Git\ Stash\ List :DiffviewFileHistory -g --range=stash<CR>
 	menu Git.Git\ Blame :lua require('gitsigns').blame()<CR>
-	menu Git.Git\ Merge<Tab>-to\ resolve\ use\ :diffget,\ :diffput,\ y\ to\ yank\ and\ p\ to\ paste\ selected\ line\ or\ range\ :MergetoolToggle :MergetoolToggle<CR>
+	menu Git.Git\ Merge:\ Resolve\ Conflicts<Tab>]x\ [x\ move,\ leader\ co/ct/cb/ca\ choose,\ dx\ drop :GitMergeTool<CR>
 	menu Git.Toggle\ Git\ Lens :Gitsigns toggle_current_line_blame<CR>
 	"Buffers
 	menu Buffers.Scroll\ bind\ <Tab>:set\ scrollbind :set scrollbind<CR>

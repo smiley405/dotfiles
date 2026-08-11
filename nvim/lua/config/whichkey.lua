@@ -56,9 +56,6 @@ wk.add({
 	-- config/keymap.lua, grouped with the other searches
 	{ '<leader>fs', desc = 'Search in file -> quickfix' },
 
-	-- config/git.lua -- the rest carry a desc on the keymap itself
-	{ '<leader>gm', desc = 'Toggle mergetool' },
-
 	-- config/rooter.lua, config/qf.lua
 	{ '<leader>a',  desc = 'Toggle rooter (auto cwd)' },
 	-- <leader>q likewise: oil shadows it, so its desc lives in config/qf.lua

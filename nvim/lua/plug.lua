@@ -24,7 +24,6 @@ Plug 'junegunn/fzf.vim'
 -- syntax than it does. Note nothing provides Haxe *syntax* now -- .hx
 -- highlighting comes solely from haxe_language_server, and .hxsl/.hxml have no
 -- filetype at all.
-Plug 'samoshkin/vim-mergetool'
 Plug 'justinmk/vim-gtfo'
 
 -- nvim utils
@@ -33,7 +32,7 @@ Plug 'windwp/nvim-autopairs'
 -- maintained fork; upstream norcalli/ still calls vim.tbl_flatten (gone in 0.13)
 Plug 'catgoose/nvim-colorizer.lua'
 Plug 'lewis6991/gitsigns.nvim'
--- diff + file history; commands register lazily, no setup() needed
+-- diff, file history, and the 3-way merge tool (see config/git.lua)
 Plug 'sindrets/diffview.nvim'
 Plug 'numToStr/Comment.nvim'
 Plug 'kevinhwang91/nvim-bqf'
