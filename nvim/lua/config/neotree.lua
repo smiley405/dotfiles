@@ -43,6 +43,14 @@ require("neo-tree").setup({
 			-- every <leader> mapping inside the tree. Nothing replaces it --
 			-- o and <cr> already expand folders.
 			["<space>"] = "noop",
+
+			-- Hand z back to vim. neo-tree binds bare z to close_all_nodes, so the
+			-- first keystroke of zz collapses the whole tree and the scroll never
+			-- happens. "noop" skips the keymap entirely rather than binding an
+			-- empty function, so z stays a native prefix and zz/zt/zb behave as in
+			-- any other buffer. close_all_nodes moves to Z, which ships unbound.
+			["z"] = "noop",
+			["Z"] = "close_all_nodes",
 		},
 	},
 
