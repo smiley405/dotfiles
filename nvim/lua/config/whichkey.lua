@@ -56,10 +56,7 @@ wk.add({
 	-- config/keymap.lua, grouped with the other searches
 	{ '<leader>fs', desc = 'Search in file -> quickfix' },
 
-	-- config/git.lua
-	{ '<leader>gd', desc = 'Diff split' },
-	{ '<leader>gb', desc = 'Blame' },
-	{ '<leader>gc', desc = 'Fugitive status' },
+	-- config/git.lua -- the rest carry a desc on the keymap itself
 	{ '<leader>gm', desc = 'Toggle mergetool' },
 
 	-- config/rooter.lua, config/qf.lua

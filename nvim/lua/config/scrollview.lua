@@ -1,12 +1,16 @@
 local excluded_filetypes = {
 	'git',
-	'fugitive',
+	-- nvim as $EDITOR for `git commit`
+	'gitcommit',
 	'no ft',
 	'netrw',
 	'undotree',
 	'qf',
 	'vim-plug',
 	'oil',
+	'snacks_picker_list',
+	'DiffviewFiles',
+	'DiffviewFileHistory',
 }
 
 -- false positive: lua_ls cannot see through this module's `local M = {}`

@@ -43,7 +43,7 @@ require("oil").setup({
 		-- ["-"] = "actions.parent",
 		-- ["_"] = "actions.open_cwd",
 		["cd"] = "actions.cd",
-		["~"] = "actions.tcd", -- for vim-fugitive, use :e to refresh changes relative to pwd
+		["~"] = "actions.tcd", -- use :e afterwards to refresh changes relative to pwd
 		["g."] = "actions.toggle_hidden",
 		["y."] = "actions.copy_entry_path",
 		--["!"] = "actions.open_cmdline",

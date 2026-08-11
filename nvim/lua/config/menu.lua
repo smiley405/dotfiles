@@ -3,37 +3,6 @@ vim.g.did_install_default_menus = 1
 vim.g.no_buffers_menu = 1
 
 vim.cmd([[
-	function! ViewGitFileHistory(format, total_commits)
-		let l:error_git_empty_file_type = 'Cannot Open Git file history.Empty file type!'
-		let l:gclog = a:format == v:true ? '0Gclog' : 'Gclog'
-
-		let l:file_name = expand('%:t')
-
-		if l:file_name != ""
-			if a:total_commits != 0
-				let l:exe_cmd = l:gclog .. " -" .. a:total_commits .. " -- %"
-				execute l:exe_cmd
-			else
-				if a:format == v:true
-					execute '0Gclog'
-				else
-					execute 'Gclog -- %'
-				endif
-			endif
-			if a:format == v:false
-				" highlight file_name
-				let @/ = file_name
-				call feedkeys(":let &hlsearch=1 \| echo \<CR>", "n")
-			endif
-		else
-			echo l:error_git_empty_file_type
-		endif
-	endfunction
-
-	function! ViewGitStashList()
-		execute 'Gclog -g stash'
-	endfunction
-
 	unmenu *
 	unmenu! *
 
@@ -45,15 +14,14 @@ vim.cmd([[
 	"View"
 	menu View.Toggle\ Colorizer :silent! ColorizerToggle<CR>
 	"Git"
-	menu Git.Repository:\ Commits\ History<Tab>:Gclog :Gclog<CR>
-	menu Git.File:\ [Formatted]\ Commits\ History<Tab>:0Gclog :call ViewGitFileHistory(v:true, 0)<CR>
-	menu Git.File:\ [Formatted]\ Last\ {n}\ Commits\ History<Tab>:0Gclog\ -{n}\ --\ % :call ViewGitFileHistory(v:true, 10)<Left><C-n>
-	menu Git.File:\ [Raw]\ Commits\ History<Tab>:Gclog\ --\ % :call ViewGitFileHistory(v:false, 0)<CR>
-	menu Git.File:\ [Raw]\ Last\ {n}\ Commits\ History<Tab>:Gclog\ -{n}\ --\ % :call ViewGitFileHistory(v:false, 10)<Left><C-n>
-	menu Git.Git\ Stash\ List<Tab>:Gclog\ -g\ stash :call ViewGitStashList()<CR>
-	menu Git.Git\ Blame<Tab>:G\ blame :G blame<CR>
+	menu Git.Diff:\ Working\ Tree :DiffviewOpen<CR>
+	menu Git.Repository:\ Commits\ History :DiffviewFileHistory<CR>
+	menu Git.File:\ Commits\ History :DiffviewFileHistory %<CR>
+	menu Git.Line:\ Commits\ History :.DiffviewFileHistory %<CR>
+	menu Git.Git\ Stash\ List :DiffviewFileHistory -g --range=stash<CR>
+	menu Git.Git\ Blame :lua require('gitsigns').blame()<CR>
 	menu Git.Git\ Merge<Tab>-to\ resolve\ use\ :diffget,\ :diffput,\ y\ to\ yank\ and\ p\ to\ paste\ selected\ line\ or\ range\ :MergetoolToggle :MergetoolToggle<CR>
-	menu Git.Toggle\ Git\ Lens :Gitsigns\ toggle_current_line_blame<CR>
+	menu Git.Toggle\ Git\ Lens :Gitsigns toggle_current_line_blame<CR>
 	"Buffers
 	menu Buffers.Scroll\ bind\ <Tab>:set\ scrollbind :set scrollbind<CR>
 	menu Buffers.Scroll\ bind\ off\ <Tab>:set\ noscrollbind :set noscrollbind<CR>
