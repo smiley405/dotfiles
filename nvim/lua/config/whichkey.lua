@@ -32,6 +32,7 @@ wk.add({
 	{ '<leader>v',  group = 'lsp / hunk' },
 	-- without this the popup shows a bare '+1 keymap' for <leader>vrn
 	{ '<leader>vr', group = 'rename' },
+	{ '<leader>x',  group = 'diagnostics' },
 
 	-- config/keymap.lua
 	{ '<leader>h',  desc = 'Clear search highlight' },
