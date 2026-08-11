@@ -21,7 +21,16 @@ Plug('junegunn/fzf', {
 	end
 })
 Plug 'junegunn/fzf.vim'
-Plug 'sheerun/vim-polyglot'
+-- vim-polyglot was here, and is gone entirely. It sourced ~5.5ms of ftdetect
+-- for ~600 languages on every start, and Nvim 0.12 now ships *more* syntax
+-- than it does (771 files vs 648). Haxe was the only pack still earning its
+-- keep; haxe_language_server (config/lsp.lua) covers that instead.
+--
+-- Worth knowing if a .hx file ever looks unhighlighted: nothing in this config
+-- provides Haxe *syntax* any more. Nvim maps .hx -> haxe but ships no
+-- syntax/haxe.vim, and there is no treesitter haxe parser installed either, so
+-- highlighting comes solely from the language server's semantic tokens. Nvim
+-- has no rule for .hxsl or .hxml at all -- those open as plain text.
 Plug 'samoshkin/vim-mergetool'
 Plug 'justinmk/vim-gtfo'
 
@@ -61,14 +70,27 @@ Plug 'williamboman/mason.nvim'
 Plug 'williamboman/mason-lspconfig.nvim'
 
 -- cmp
-Plug 'hrsh7th/nvim-cmp'
-Plug 'hrsh7th/cmp-nvim-lsp'
-Plug 'hrsh7th/cmp-buffer'
-Plug 'hrsh7th/cmp-path'
-Plug 'hrsh7th/cmp-nvim-lsp-signature-help'
-Plug 'L3MON4D3/LuaSnip'
-Plug 'saadparwaiz1/cmp_luasnip'
-Plug 'rafamadriz/friendly-snippets'
+--
+-- `on = {}` is vim-plug for "never load this on your own" -- the plugin is
+-- registered but kept out of 'runtimepath' until something calls plug#load().
+-- config/completion.lua does exactly that, from the deferred half of init.lua.
+--
+-- Without it these load during startup no matter how late the config module
+-- runs: cmp-buffer, cmp_luasnip and LuaSnip all ship after/plugin/ files, and
+-- those are sourced before the first paint and drag the whole cmp + LuaSnip
+-- require chain in with them. None of it is needed until insert mode.
+local lazy = { on = {} }
+
+Plug('hrsh7th/nvim-cmp', lazy)
+Plug('hrsh7th/cmp-nvim-lsp', lazy)
+Plug('hrsh7th/cmp-buffer', lazy)
+Plug('hrsh7th/cmp-path', lazy)
+Plug('hrsh7th/cmp-nvim-lsp-signature-help', lazy)
+Plug('L3MON4D3/LuaSnip', lazy)
+Plug('saadparwaiz1/cmp_luasnip', lazy)
+-- snippet data only, but it still has to be in 'runtimepath' before
+-- luasnip's from_vscode loader can find it
+Plug('rafamadriz/friendly-snippets', lazy)
 
 -- formatter
 Plug 'sbdchd/neoformat'

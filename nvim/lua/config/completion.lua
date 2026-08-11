@@ -1,3 +1,18 @@
+-- The completion stack is registered with `on = {}` in plug.lua, i.e. held out
+-- of 'runtimepath' until asked for, so that its after/plugin/ files do not run
+-- during startup. This is the ask. Everything below is unchanged by it -- the
+-- plugins are fully loaded by the time the requires on the next lines run.
+vim.fn['plug#load'](
+	'nvim-cmp',
+	'cmp-nvim-lsp',
+	'cmp-buffer',
+	'cmp-path',
+	'cmp-nvim-lsp-signature-help',
+	'LuaSnip',
+	'cmp_luasnip',
+	'friendly-snippets'
+)
+
 local cmp = require('cmp')
 local luasnip = require('luasnip')
 local compare = require('cmp.config.compare')
