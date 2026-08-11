@@ -15,9 +15,11 @@ Plug 'tpope/vim-fugitive'
 Plug 'tpope/vim-unimpaired'
 Plug 'tpope/vim-surround'
 Plug 'tpope/vim-repeat'
-Plug('junegunn/fzf', { ['do'] = function()
-  vim.fn['fzf#install']()
-end })
+Plug('junegunn/fzf', {
+	['do'] = function()
+		vim.fn['fzf#install']()
+	end
+})
 Plug 'junegunn/fzf.vim'
 Plug 'sheerun/vim-polyglot'
 Plug 'samoshkin/vim-mergetool'
@@ -30,11 +32,23 @@ Plug 'norcalli/nvim-colorizer.lua'
 Plug 'lewis6991/gitsigns.nvim'
 Plug 'numToStr/Comment.nvim'
 Plug 'kevinhwang91/nvim-bqf'
-Plug 'smoka7/hop.nvim'
+-- label-based motions: enhances f/F/t/T and adds a window-wide jump
+Plug 'folke/flash.nvim'
 Plug 'nvim-lualine/lualine.nvim'
 Plug 'petertriho/nvim-scrollbar'
 Plug 'stevearc/oil.nvim'
 Plug 'hedyhli/outline.nvim'
+-- popup listing the keymaps behind whatever prefix was typed
+-- (uses nvim-web-devicons, declared below, for the per-mapping icons)
+Plug 'folke/which-key.nvim'
+
+-- vscode-like ui: cmdline popup and lsp hover/docs styling
+-- (needs MunifTanjim/nui.nvim, declared below)
+Plug 'folke/noice.nvim'
+-- modular qol collection; only indent guides, symbol highlighting, the
+-- vim.ui.input box and the notifier are switched on (see config/snacks.lua).
+-- also provides the notification backend noice renders toasts through.
+Plug 'folke/snacks.nvim'
 
 -- tree file explorer
 Plug 'nvim-neo-tree/neo-tree.nvim'
@@ -63,4 +77,3 @@ Plug 'sbdchd/neoformat'
 -- Plug 'jeroenbourgois/vim-actionscript'
 
 vim.call('plug#end')
-

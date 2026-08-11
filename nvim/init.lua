@@ -6,6 +6,9 @@ local config = {
 	'diagnostic',
 	'keymap',
 	'colorscheme',
+	-- snacks first: noice uses its notifier as the toast backend
+	'snacks',
+	'noice',
 	'hardmode',
 	'menu',
 	'rooter',
@@ -16,14 +19,16 @@ local config = {
 	'comment',
 	'fzf',
 	'qf',
-	'hop',
+	'flash',
 	'scrollview',
 	'colorizer',
 	'oil',
 	'outline',
 	'git',
 	'lsp',
-	'neotree'
+	'neotree',
+	-- last: its spec only labels mappings the entries above have defined
+	'whichkey'
 }
 
 for _, name in ipairs(config) do

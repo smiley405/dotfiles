@@ -1,5 +1,5 @@
 function map(mode, shortcut, command)
-	vim.api.nvim_set_keymap(mode, shortcut, command, { noremap=true, silent=true })
+	vim.api.nvim_set_keymap(mode, shortcut, command, { noremap = true, silent = true })
 end
 
 map('n', '<leader>h', '<cmd>noh<CR>')
@@ -38,9 +38,6 @@ vim.cmd([[
 	endfunction
 
 	nnoremap <silent> <leader>p :call CopyEchoCWD()<CR>
-	nnoremap <silent> <leader>, :call CopyEchoOpenedFileName()<CR>
-	nnoremap <silent> <leader>. :call CopyEchoFullOpenedFilePath()<CR>
-	nnoremap <silent> <leader>/ :call CopyEchoFullDirPath()<CR>
 	nnoremap <silent> <leader>tN :tabnew<CR>
 	nnoremap <silent> <leader>tn :tab split<CR>
 	nnoremap <silent> <leader>tc :tabc<CR>
@@ -57,3 +54,14 @@ vim.cmd([[
 		autocmd TabClosed * tabprevious
 	augroup END
 ]])
+
+-- Lua rather than `nnoremap` in the block above so these can carry a desc:
+-- netrw shadows all three buffer-locally with an under-the-cursor variant, and
+-- which-key gives a wk.add() spec entry precedence over a mapping's own desc --
+-- so a spec label here would describe the wrong behaviour inside netrw.
+vim.keymap.set('n', '<leader>,', '<cmd>call CopyEchoOpenedFileName()<CR>',
+	{ silent = true, desc = 'Copy file name' })
+vim.keymap.set('n', '<leader>.', '<cmd>call CopyEchoFullOpenedFilePath()<CR>',
+	{ silent = true, desc = 'Copy full file path' })
+vim.keymap.set('n', '<leader>/', '<cmd>call CopyEchoFullDirPath()<CR>',
+	{ silent = true, desc = 'Copy directory path' })

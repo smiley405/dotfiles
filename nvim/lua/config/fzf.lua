@@ -1,8 +1,8 @@
-vim.keymap.set('n', '<leader>ff', '<cmd>Files<CR>', {})
-vim.keymap.set('n', '<leader>fb', '<cmd>Buffers<CR>', {})
-vim.keymap.set('n', '<leader>fw', '<cmd>Windows<CR>', {})
-vim.keymap.set('n', '<leader>fj', '<cmd>Jumps<CR>', {})
-vim.keymap.set('n', '<leader>fm', '<cmd>Marks<CR>', {})
+vim.keymap.set('n', '<leader>ff', '<cmd>Files<CR>', { desc = 'Files' })
+vim.keymap.set('n', '<leader>fb', '<cmd>Buffers<CR>', { desc = 'Buffers' })
+vim.keymap.set('n', '<leader>fw', '<cmd>Windows<CR>', { desc = 'Windows' })
+vim.keymap.set('n', '<leader>fj', '<cmd>Jumps<CR>', { desc = 'Jumps' })
+vim.keymap.set('n', '<leader>fm', '<cmd>Marks<CR>', { desc = 'Marks' })
 
 vim.cmd([[
 	let g:fzf_preview_window = []

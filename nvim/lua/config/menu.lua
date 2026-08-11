@@ -53,7 +53,7 @@ vim.cmd([[
 	menu Git.Git\ Stash\ List<Tab>:Gclog\ -g\ stash :call ViewGitStashList()<CR>
 	menu Git.Git\ Blame<Tab>:G\ blame :G blame<CR>
 	menu Git.Git\ Merge<Tab>-to\ resolve\ use\ :diffget,\ :diffput,\ y\ to\ yank\ and\ p\ to\ paste\ selected\ line\ or\ range\ :MergetoolToggle :MergetoolToggle<CR>
-	menu Git.Toggle\ Git\ Lens :GitBlameToggle<CR>
+	menu Git.Toggle\ Git\ Lens :Gitsigns\ toggle_current_line_blame<CR>
 	"Buffers
 	menu Buffers.Scroll\ bind\ <Tab>:set\ scrollbind :set scrollbind<CR>
 	menu Buffers.Scroll\ bind\ off\ <Tab>:set\ noscrollbind :set noscrollbind<CR>
@@ -73,5 +73,3 @@ vim.cmd([[
 	menu cmd.cmd\ Output\ To\ Buffer\ <Tab>:r\ !RANDOM_COMMAND :r !<C-n>
 	menu cmd.cmd\ Output\ To\ Quick\ Fix\ <Tab>:cex\ system('$RANDOM_COMMAND')\ bar\ copen :cex system('')<bar>copen<Left><Left><Left><Left><Left><Left><Left><Left><C-n>
 ]])
-
-
