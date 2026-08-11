@@ -33,7 +33,8 @@ vim.opt.foldmethod = 'manual'
 vim.opt.foldenable = true
 
 vim.opt.termguicolors = true
--- vim.opt.clipboard:append { 'unnamed', 'unnamedplus' }
+-- Use the system clipboard for normal yank/paste
+vim.opt.clipboard = "unnamedplus"
 
 vim.cmd([[
 	let mapleader = "\<Space>"
