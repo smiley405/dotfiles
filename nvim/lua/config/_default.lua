@@ -1,15 +1,12 @@
-vim.opt.encoding = 'utf-8'
 vim.opt.ignorecase = true
 vim.opt.smartcase = true
 
 vim.opt.number = true
 vim.opt.relativenumber = false
 
--- dont wrap lines
+-- soft wrap, breaking at word boundaries and keeping the indent
 vim.opt.wrap = true
--- wrap lines at convenient points
 vim.opt.linebreak = true
--- wrap lines such that vertical indent is not broken
 vim.opt.breakindent = true
 
 vim.o.formatoptions = 'jcroql'
@@ -26,12 +23,10 @@ vim.opt.directory = vim.fn.expand('~/.vim/swp')
 vim.opt.backup = false
 vim.opt.writebackup = false
 
--- Having longer updatetime (default is 4000 ms = 4 s) leads to noticeable
--- delays and poor user experience.
+-- default is 4000ms, which makes CursorHold-driven UI feel dead
 vim.opt.updatetime = 100
 
--- Always show the signcolumn, otherwise it would shift the text each time
--- diagnostics appear/become resolved.
+-- always on, so text does not shift when diagnostics appear
 vim.opt.signcolumn = 'yes'
 
 vim.opt.foldmethod = 'manual'
@@ -49,4 +44,3 @@ vim.cmd([[
 		autocmd TextYankPost * silent! lua vim.hl.on_yank {higroup="IncSearch", timeout=150}
 	augroup END
 ]])
-

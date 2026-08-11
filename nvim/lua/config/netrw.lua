@@ -54,9 +54,6 @@ vim.cmd([[
 
 		nmap <buffer> - <Plug>NetrwBrowseUpDir <bar> :call EchoFullDirPath()<CR>
 		nmap <buffer> <CR> <Plug>NetrwLocalBrowseCheck <bar> :call EchoFullDirPath()<CR>
-		nnoremap <buffer> <silent> <leader>, :call CopyEchoCursorFile()<CR>
-		nnoremap <buffer> <silent> <leader>. :call CopyEchoFullFilePath()<CR>
-		nnoremap <buffer> <silent> <leader>/ :call CopyEchoFullDirPath()<CR>
 	endfunction
 
 	augroup my-netrw
@@ -64,3 +61,21 @@ vim.cmd([[
 		autocmd FileType netrw call s:init_netrw()
 	augroup END
 ]])
+
+-- Shadow the global <leader>, / . / / (config/keymap.lua) to act on the file
+-- under the cursor. Lua, not nnoremap, so they can carry a desc -- otherwise
+-- which-key shows the global label, which is wrong inside netrw.
+vim.api.nvim_create_autocmd('FileType', {
+	group = vim.api.nvim_create_augroup('my_netrw_keys', { clear = true }),
+	pattern = 'netrw',
+	callback = function(event)
+		local function map(lhs, rhs, desc)
+			vim.keymap.set('n', lhs, rhs,
+				{ buffer = event.buf, silent = true, desc = desc })
+		end
+
+		map('<leader>,', '<cmd>call CopyEchoCursorFile()<CR>', 'Copy file name (under cursor)')
+		map('<leader>.', '<cmd>call CopyEchoFullFilePath()<CR>', 'Copy full path (under cursor)')
+		map('<leader>/', '<cmd>call CopyEchoFullDirPath()<CR>', 'Copy directory path')
+	end,
+})
