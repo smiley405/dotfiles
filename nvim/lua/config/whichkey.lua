@@ -35,7 +35,6 @@ wk.add({
 	{ '<leader>x',  group = 'diagnostics' },
 
 	-- config/keymap.lua
-	{ '<leader>h',  desc = 'Clear search highlight' },
 	{ '<leader>r',  desc = 'Toggle relative line numbers' },
 	{ '<leader>p',  desc = 'Copy cwd to clipboard' },
 	-- <leader>, . and / are absent on purpose: netrw shadows them buffer-locally

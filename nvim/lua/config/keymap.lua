@@ -1,8 +1,5 @@
-function map(mode, shortcut, command)
-	vim.api.nvim_set_keymap(mode, shortcut, command, { noremap = true, silent = true })
-end
-
-map('n', '<leader>h', '<cmd>noh<CR>')
+vim.keymap.set('n', '<leader>h', '<cmd>noh<CR>',
+	{ silent = true, desc = 'Clear search highlight' })
 
 vim.cmd([[
 	"@see: https://balazshobbies.wordpress.com/vim-jegyzetek/napi-vim-bemelegito/vim-map-remap-nnoremap/

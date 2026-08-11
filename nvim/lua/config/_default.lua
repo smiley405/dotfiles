@@ -1,4 +1,3 @@
-vim.opt.encoding = 'utf-8'
 vim.opt.ignorecase = true
 vim.opt.smartcase = true
 
