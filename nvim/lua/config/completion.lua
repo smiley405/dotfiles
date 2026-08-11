@@ -101,6 +101,19 @@ vim.api.nvim_create_autocmd('ColorScheme', {
 	callback = set_cmp_highlights,
 })
 
+-- True when the cursor sits just after a member-access operator: `foo.`, `foo?.`,
+-- `foo->`, `foo::`. In that position the only valid candidates are members of
+-- whatever is on the left, which the language server knows and nothing else
+-- does -- so the word-scraping sources are suppressed there (see entry_filter
+-- on `buffer` and `luasnip` below).
+local function after_member_access()
+	local line = vim.api.nvim_get_current_line()
+	local col = vim.api.nvim_win_get_cursor(0)[2]
+	-- step back over the partial identifier being typed
+	local before = line:sub(1, col):gsub('[%w_]*$', '')
+	return before:match('[%.:>]$') ~= nil
+end
+
 local function has_words_before()
 	local line, col = unpack(vim.api.nvim_win_get_cursor(0))
 	if col == 0 then
@@ -263,17 +276,46 @@ cmp.setup({
 	sources = cmp.config.sources({
 		{ name = 'nvim_lsp',                priority = 1000 },
 		{ name = 'nvim_lsp_signature_help', priority = 900 },
-		{ name = 'luasnip',                 priority = 750 },
+		{
+			name = 'luasnip',
+			priority = 750,
+			-- `styles.` offered ~130 snippets before this; none of them are members
+			entry_filter = function() return not after_member_access() end,
+		},
 		{ name = 'path',                    priority = 500 },
 		{
 			name = 'buffer',
 			priority = 250,
 			keyword_length = 3,
 			max_item_count = 10,
+			-- Typing `styles.` used to return 2 real class names from the server
+			-- followed by 10 words scraped out of the buffer -- `div`, `from`,
+			-- `const`, `import`, `className`. None of them are members of
+			-- anything, and VSCode shows none of them either.
+			entry_filter = function() return not after_member_access() end,
 			option = {
-				-- complete from every loaded buffer, not just the current one
+				-- Was nvim_list_bufs(), i.e. every buffer in the session --
+				-- including unloaded ones and the scratch buffers oil, neo-tree
+				-- and the terminal leave behind. That is the main source of
+				-- duplicate entries sitting next to the LSP results (the same
+				-- identifier harvested out of several buffers at once) and it
+				-- re-indexes the whole set on each keystroke.
+				--
+				-- Visible buffers only, real files only, and skip anything big
+				-- enough to stall the popup while it is being tokenised.
 				get_bufnrs = function()
-					return vim.api.nvim_list_bufs()
+					local bufs = {}
+					for _, win in ipairs(vim.api.nvim_list_wins()) do
+						local buf = vim.api.nvim_win_get_buf(win)
+						if vim.bo[buf].buftype == '' and vim.api.nvim_buf_is_loaded(buf) then
+							local name = vim.api.nvim_buf_get_name(buf)
+							local stat = name ~= '' and vim.uv.fs_stat(name) or nil
+							if not stat or stat.size < 512 * 1024 then
+								bufs[buf] = true
+							end
+						end
+					end
+					return vim.tbl_keys(bufs)
 				end,
 			},
 		},
