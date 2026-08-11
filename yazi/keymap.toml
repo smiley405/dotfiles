@@ -1,0 +1,14 @@
+# yazi -> neovim, via bin/yazi-wez (reverse direction: nvim/lua/config/yazi.lua).
+# <C-o>/<C-t> are unbound by default, so nothing native is shadowed; $@ is the
+# selection, falling back to the hovered file. Inside a session started from
+# nvim, yazi-wez reuses that nvim rather than spawning a second one.
+
+[[mgr.prepend_keymap]]
+on = "<C-o>"
+run = 'shell -- yazi-wez edit "$@"'
+desc = "Open in nvim (wezterm split)"
+
+[[mgr.prepend_keymap]]
+on = "<C-t>"
+run = 'shell -- yazi-wez edit --tab "$@"'
+desc = "Open in nvim (new wezterm tab)"

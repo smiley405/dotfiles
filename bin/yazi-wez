@@ -1,0 +1,117 @@
+#!/usr/bin/env bash
+#
+# yazi <-> neovim over wezterm panes.
+#
+#   pick <nvim-server> <nvim-pane-id> [start-path]
+#       Run yazi in a split spawned by nvim/lua/config/yazi.lua. <Enter> hands
+#       the selection to that nvim, refocuses it, and exits (closing the split).
+#
+#   edit [--tab|--new] <path>...
+#       Bound in yazi/keymap.toml: open paths in nvim -- the one we came from
+#       inside a `pick` session, otherwise a fresh nvim in a split or tab.
+#
+# wezterm runs windows-side, hence wezterm.exe and the explicit `bash -lc`
+# (the default domain is cmd.exe).
+
+set -euo pipefail
+
+WEZTERM=${WEZTERM_CLI:-wezterm.exe}
+
+die() { printf 'yazi-wez: %s\n' "$*" >&2; exit 1; }
+
+wez() { "$WEZTERM" cli "$@" | tr -d '\r'; }
+
+# WEZTERM_PANE is exported into native panes but never reaches WSL, so fall back
+# to the focused pane -- correct here, since a key was just pressed in it. Of
+# several client entries, the one that just acted is the least idle.
+caller_pane() {
+	if [ -n "${WEZTERM_PANE:-}" ]; then
+		printf '%s\n' "$WEZTERM_PANE"
+		return
+	fi
+	wez list-clients --format json |
+		jq -r 'sort_by(.idle_time.secs)[0].focused_pane_id // empty'
+}
+
+# Quote a command for `bash -lc`. Panes start with a bare environment and a
+# windows-side cwd, and `bash -l` skips ~/.bashrc where brew puts nvim/yazi/jq
+# on PATH -- so carry the caller's PATH across instead of hardcoding a prefix.
+shell_command() {
+	local dir=$1; shift
+	printf 'export PATH=%q; cd %q && exec' "$PATH" "$dir"
+	printf ' %q' "$@"
+}
+
+cmd_pick() {
+	local server=${1:-} pane=${2:-} start=${3:-}
+	[ -n "$server" ] && [ -n "$pane" ] || die 'usage: yazi-wez pick <nvim-server> <nvim-pane-id> [start-path]'
+
+	# not `local`: the EXIT trap fires after this returns, out of a local's scope
+	chooser=$(mktemp -t yazi-wez.XXXXXXXX)
+	trap 'rm -f "$chooser"' EXIT
+
+	# let a nested `edit` reach the nvim that spawned us
+	export YAZI_WEZ_NVIM=$server YAZI_WEZ_PANE=$pane
+
+	if [ -n "$start" ] && [ -e "$start" ]; then
+		yazi --chooser-file="$chooser" "$start"
+	else
+		yazi --chooser-file="$chooser"
+	fi
+
+	# empty when yazi was quit with q/<Esc>
+	if [ -s "$chooser" ]; then
+		local files=()
+		mapfile -t files < "$chooser"
+		nvim --server "$server" --remote "${files[@]}" ||
+			printf 'yazi-wez: could not reach nvim at %s\n' "$server" >&2
+	fi
+
+	wez activate-pane --pane-id "$pane" >/dev/null
+}
+
+cmd_edit() {
+	local mode=split
+	while [ $# -gt 0 ]; do
+		case $1 in
+			--tab) mode=tab; shift ;;
+			--new) mode=split; YAZI_WEZ_NVIM=''; shift ;;
+			--) shift; break ;;
+			*) break ;;
+		esac
+	done
+	[ $# -gt 0 ] || exit 0
+
+	# a nvim is already waiting for us -- reuse it
+	if [ -n "${YAZI_WEZ_NVIM:-}" ]; then
+		nvim --server "$YAZI_WEZ_NVIM" --remote "$@" || die "could not reach nvim at $YAZI_WEZ_NVIM"
+		# an `&&` one-liner would return 1 when unset, which set -e turns into an exit
+		if [ -n "${YAZI_WEZ_PANE:-}" ]; then
+			wez activate-pane --pane-id "$YAZI_WEZ_PANE" >/dev/null
+		fi
+		return
+	fi
+
+	local caller
+	caller=$(caller_pane) || true
+	[ -n "$caller" ] || die 'no focused wezterm pane -- is this running under wezterm?'
+
+	local dir
+	dir=$(dirname -- "$1")
+	local run
+	run=$(shell_command "$dir" nvim "$@")
+
+	if [ "$mode" = tab ]; then
+		wez spawn --pane-id "$caller" -- bash -lc "$run" >/dev/null
+	else
+		# --left so nvim lands where it usually sits, yazi keeps the side
+		wez split-pane --pane-id "$caller" --left --percent 60 -- bash -lc "$run" >/dev/null
+	fi
+}
+
+case ${1:-} in
+	pick) shift; cmd_pick "$@" ;;
+	edit) shift; cmd_edit "$@" ;;
+	pane) caller_pane ;;
+	*) die 'usage: yazi-wez {pick|edit|pane} [args...]' ;;
+esac
