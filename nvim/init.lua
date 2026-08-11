@@ -36,6 +36,8 @@ local deferred = {
 	-- safe to defer: neo-tree is the directory handler here
 	-- (oil has default_file_explorer = false)
 	'oil',
+	-- keymaps only; yazi itself runs in a wezterm pane, not in nvim
+	'yazi',
 	'outline',
 	'git',
 	'lsp',

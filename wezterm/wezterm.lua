@@ -79,6 +79,20 @@ end
 
 config.check_for_updates = false
 
+-- On Windows, start straight in WSL Ubuntu instead of cmd.exe. Everywhere else
+-- (linux/macos) this is a no-op and the native login shell is used.
+if wezterm.target_triple:find('windows') then
+	config.wsl_domains = {
+		{
+			name = 'WSL:Ubuntu',
+			distribution = 'Ubuntu',
+			-- start in the linux $HOME rather than /mnt/c/Users/...
+			default_cwd = '~',
+		},
+	}
+	config.default_domain = 'WSL:Ubuntu'
+end
+
 -- This is where you actually apply your config choices
 
 -- For example, changing the color scheme:
