@@ -123,6 +123,12 @@ local function has_words_before()
 	return text:sub(col, col):match('%s') == nil
 end
 
+-- cmp annotates `cmp.setup` as `cmp.SetupProperty | fun(c)` -- a union of a
+-- table of sub-setters and a callable. lua_ls can only narrow to one branch at
+-- a time, so it reads the plain call here as the table branch (and `.cmdline`
+-- below as the function branch) and flags both. Verified correct at runtime:
+-- `cmp.setup` is a table with a __call metamethod plus a `cmdline` field.
+---@diagnostic disable-next-line: redundant-parameter
 cmp.setup({
 	snippet = {
 		-- REQUIRED - you must specify a snippet engine
@@ -329,6 +335,7 @@ if ok then
 end
 
 -- Use buffer source for `/` and `?` (if you enabled `native_menu`, this won't work anymore).
+---@diagnostic disable-next-line: undefined-field
 cmp.setup.cmdline({ '/', '?' }, {
 	mapping = cmp.mapping.preset.cmdline(),
 	sources = {
@@ -337,6 +344,7 @@ cmp.setup.cmdline({ '/', '?' }, {
 })
 
 -- Use cmdline & path source for ':' (if you enabled `native_menu`, this won't work anymore).
+---@diagnostic disable-next-line: undefined-field
 cmp.setup.cmdline(':', {
 	mapping = cmp.mapping.preset.cmdline(),
 	sources = cmp.config.sources({

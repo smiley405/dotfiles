@@ -20,6 +20,9 @@ vim.keymap.set('', '<leader>q', '<cmd>ccl<CR>',
 require('bqf').setup({
 	auto_enable = true,
 	auto_resize_height = true, -- highly recommended enable
+	-- bqf marks every field of its config classes as required, but setup()
+	-- merges over defaults, so a partial table is the intended usage
+	---@diagnostic disable-next-line: missing-fields
 	preview = {
 		win_height = 12,
 		win_vheight = 12,

@@ -6,7 +6,8 @@ vim.diagnostic.config({
 			focused = false,
 			style = 'minimal',
 			border = 'rounded',
-			source = 'always',
+			-- 'always' was dropped in 0.11; the field is boolean|'if_many' now
+			source = true,
 			header = '',
 			prefix = '',
 		},
@@ -26,5 +27,11 @@ vim.diagnostic.config({
 		},
 	})
 
-vim.lsp.handlers['textDocument/hover'] = vim.lsp.with(vim.lsp.handlers.hover, { border = 'rounded' })
-vim.lsp.handlers['textDocument/signatureHelp'] = vim.lsp.with(vim.lsp.handlers.signature_help, { border = 'rounded' })
+-- Bordered hover/signature popups used to be wired up here by wrapping the
+-- stock handlers with vim.lsp.with(). All three of those APIs (vim.lsp.with,
+-- vim.lsp.handlers.hover, vim.lsp.handlers.signature_help) are deprecated and
+-- go away in 0.13 -- calling them printed a deprecation notice on every start.
+--
+-- The border is passed per-call instead: hover at its keymap in config/lsp.lua,
+-- and signature help by noice (presets.lsp_doc_border in config/noice.lua),
+-- which is what actually renders both popups here anyway.

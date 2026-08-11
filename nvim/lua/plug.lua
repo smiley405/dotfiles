@@ -37,7 +37,9 @@ Plug 'justinmk/vim-gtfo'
 -- nvim utils
 Plug 'nvim-lua/plenary.nvim'
 Plug 'windwp/nvim-autopairs'
-Plug 'norcalli/nvim-colorizer.lua'
+-- maintained fork; upstream norcalli/ has been dead since 2021 and still calls
+-- vim.tbl_flatten, which is deprecated and goes away in 0.13
+Plug 'catgoose/nvim-colorizer.lua'
 Plug 'lewis6991/gitsigns.nvim'
 Plug 'numToStr/Comment.nvim'
 Plug 'kevinhwang91/nvim-bqf'

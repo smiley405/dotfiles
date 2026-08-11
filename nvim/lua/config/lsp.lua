@@ -31,11 +31,15 @@ vim.api.nvim_create_autocmd('LspAttach', {
 		-- Mappings.
 		-- See `:help vim.lsp.*` for documentation on any of the below functions
 		map('<leader>e', '<cmd>lua vim.diagnostic.open_float()<cr>', 'Diagnostics (float)')
-		map('[d', '<cmd>lua vim.diagnostic.goto_prev()<cr>', 'Previous diagnostic')
-		map(']d', '<cmd>lua vim.diagnostic.goto_next()<cr>', 'Next diagnostic')
+		-- goto_prev/goto_next are deprecated and removed in 0.13; jump() is the
+		-- replacement and takes the direction as a count
+		map('[d', function() vim.diagnostic.jump({ count = -1 }) end, 'Previous diagnostic')
+		map(']d', function() vim.diagnostic.jump({ count = 1 }) end, 'Next diagnostic')
 		map('gd', '<cmd>lua vim.lsp.buf.definition()<cr>', 'Go to definition')
 		map('<leader>vrn', '<cmd>lua vim.lsp.buf.rename()<cr>', 'Rename symbol')
-		map('K', '<cmd>lua vim.lsp.buf.hover()<cr>', 'Hover docs')
+		-- border used to come from a vim.lsp.with() handler wrapper (deprecated);
+		-- it is passed per-call now -- see the note in config/diagnostic.lua
+		map('K', function() vim.lsp.buf.hover({ border = 'rounded' }) end, 'Hover docs')
 		map('<space>ca', '<cmd>lua vim.lsp.buf.code_action()<cr>', 'Code action')
 		map('gr', '<cmd>lua vim.lsp.buf.references()<cr>', 'References')
 		-- Enable completion triggered by <c-x><c-o>

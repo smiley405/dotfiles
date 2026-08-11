@@ -9,6 +9,9 @@ local excluded_filetypes = {
 	'oil',
 }
 
+-- lua_ls does not resolve this module's return table through its `local M = {}`
+-- indirection and reports `setup` as undefined; it exists (scrollbar/init.lua).
+---@diagnostic disable-next-line: undefined-field
 require('scrollbar').setup({
 		excluded_filetypes = excluded_filetypes,
 		handle = {
