@@ -5,7 +5,6 @@ vim.fn['plug#load'](
 	'cmp-nvim-lsp',
 	'cmp-buffer',
 	'cmp-path',
-	'cmp-nvim-lsp-signature-help',
 	'LuaSnip',
 	'cmp_luasnip',
 	'friendly-snippets'
@@ -157,7 +156,7 @@ cmp.setup({
 		fields = { 'kind', 'abbr', 'menu' },
 		expandable_indicator = true,
 		format = function(_entry, item)
-			-- some sources (signature help, cmdline) omit the kind entirely
+			-- some sources (cmdline, path) omit the kind entirely
 			local kind = item.kind or 'Text'
 			local icon = kind_icons[kind] or ''
 
@@ -267,7 +266,6 @@ cmp.setup({
 	-- one flat list ranked by priority; LSP results do not hide the rest
 	sources = cmp.config.sources({
 		{ name = 'nvim_lsp',                priority = 1000 },
-		{ name = 'nvim_lsp_signature_help', priority = 900 },
 		{
 			name = 'luasnip',
 			priority = 750,
