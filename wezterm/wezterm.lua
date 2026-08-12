@@ -214,7 +214,7 @@ config.keys = {
 
 	-- rename tab
 	{
-		key = 'y',
+		key = 'r',
 		mods = 'LEADER',
 		action = act.PromptInputLine {
 			description = 'Enter new name for tab',
