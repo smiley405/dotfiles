@@ -102,6 +102,8 @@ end
 -- config.color_scheme = 'AdventureTime'
 
 
+-- Pinky + thumb, and pressed more than anything else here, so it cannot be a
+-- two-modifier claw. nvim gives up <C-Space> for it -- see config/cmp.lua.
 config.leader = { key = 'Space', mods = 'CTRL', timeout_milliseconds = 1000 }
 
 
@@ -121,21 +123,35 @@ config.colors = {
 }
 
 
+-- Leader is CTRL+Space. The pane keys mirror vim's <C-w> window prefix, so
+-- LEADER h is what <C-w>h is in vim; the odd ones out are marked.
 config.keys = {
-	-- activate pane selection mode
-	{
-		key = 'o',
-		mods = 'LEADER',
-		action = act.PaneSelect,
-		-- with numeric labels
-		-- action = act.PaneSelect {
-		-- 	alphabet = '1234567890',
-		-- },
-	},
+	-- LEADER h/j/k/l -- move between panes
+	{ key = 'h', mods = 'LEADER', action = act.ActivatePaneDirection 'Left' },
+	{ key = 'j', mods = 'LEADER', action = act.ActivatePaneDirection 'Down' },
+	{ key = 'k', mods = 'LEADER', action = act.ActivatePaneDirection 'Up' },
+	{ key = 'l', mods = 'LEADER', action = act.ActivatePaneDirection 'Right' },
 
-	-- swap pane
+	-- LEADER s / LEADER v -- split below / right
+	{ key = 's', mods = 'LEADER', action = act.SplitPane { direction = 'Down' } },
+	{ key = 'v', mods = 'LEADER', action = act.SplitPane { direction = 'Right' } },
+
+	-- LEADER H/J/K/L -- split toward any edge. No vim equivalent; shifted so
+	-- the letter still names the direction.
+	{ key = 'H', mods = 'LEADER', action = act.SplitPane { direction = 'Left' } },
+	{ key = 'J', mods = 'LEADER', action = act.SplitPane { direction = 'Down' } },
+	{ key = 'K', mods = 'LEADER', action = act.SplitPane { direction = 'Up' } },
+	{ key = 'L', mods = 'LEADER', action = act.SplitPane { direction = 'Right' } },
+
+	-- LEADER o -- zoom. "only" in vim, though <C-w>o is final and this toggles.
+	{ key = 'o', mods = 'LEADER', action = act.TogglePaneZoomState },
+
+	-- LEADER w -- pick a pane
+	{ key = 'w', mods = 'LEADER', action = act.PaneSelect },
+
+	-- LEADER x -- exchange with the pane picked
 	{
-		key = 'u',
+		key = 'x',
 		mods = 'LEADER',
 		action = act.PaneSelect {
 			mode = 'SwapWithActive',
@@ -143,88 +159,19 @@ config.keys = {
 		},
 	},
 
-	-- ShowTabNavigator
-	{ key = 'i', mods = 'LEADER', action = wezterm.action.ShowTabNavigator },
+	-- LEADER q -- close this pane
+	{ key = 'q', mods = 'LEADER', action = act.CloseCurrentPane { confirm = true } },
 
-	-- split-pane with vim key movements H-J-K-L
-	{
-		key = 'H',
-		mods = 'LEADER',
-		action = act.SplitPane {
-			direction = 'Left',
-			-- command = { args = { 'top' } },
-			-- size = { Percent = 50 },
-		},
-	},
-	{
-		key = 'J',
-		mods = 'LEADER',
-		action = act.SplitPane {
-			direction = 'Down',
-		},
-	},
-	{
-		key = 'K',
-		mods = 'LEADER',
-		action = act.SplitPane {
-			direction = 'Up',
-		},
-	},
-	{
-		key = 'L',
-		mods = 'LEADER',
-		action = act.SplitPane {
-			direction = 'Right',
-		},
-	},
-
-	-- switch ActivatePaneDirection
-	{
-		key = 'h',
-		mods = 'LEADER',
-		action = act.ActivatePaneDirection 'Left',
-	},
-	{
-		key = 'l',
-		mods = 'LEADER',
-		action = act.ActivatePaneDirection 'Right',
-	},
-	{
-		key = 'k',
-		mods = 'LEADER',
-		action = act.ActivatePaneDirection 'Up',
-	},
-	{
-		key = 'j',
-		mods = 'LEADER',
-		action = act.ActivatePaneDirection 'Down',
-	},
-
-	-- Toggles the zoom state of the current pane
-	{
-		key = 'Space',
-		mods = 'LEADER',
-		action = act.TogglePaneZoomState,
-	},
-
-	-- Create a new tab in the same domain as the current pane.
-	-- This is usually what you want.
-	{
-		key = 't',
-		mods = 'LEADER',
-		action = act.SpawnTab 'CurrentPaneDomain',
-	},
-
-	-- rename tab
+	-- LEADER t/i/r -- tabs. No vim equivalent.
+	{ key = 't', mods = 'LEADER', action = act.SpawnTab 'CurrentPaneDomain' },
+	{ key = 'i', mods = 'LEADER', action = act.ShowTabNavigator },
 	{
 		key = 'r',
 		mods = 'LEADER',
 		action = act.PromptInputLine {
 			description = 'Enter new name for tab',
 			action = wezterm.action_callback(function(window, pane, line)
-				-- line will be `nil` if they hit escape without entering anything
-				-- An empty string if they just hit enter
-				-- Or the actual line of text they wrote
+				-- line is nil on escape, '' if they just hit enter
 				if line then
 					window:active_tab():set_title(line)
 				end
@@ -232,18 +179,24 @@ config.keys = {
 		},
 	},
 
-	-- close current pane
+	-- LEADER Q, not x: x is <C-w>x to a vim hand, and a no-prompt kill one key
+	-- from q is not what that finger expects.
 	{
-		key = 'q',
+		key = 'Q',
 		mods = 'LEADER',
-		action = wezterm.action.CloseCurrentPane { confirm = true },
+		action = act.InputSelector {
+			title = 'Quit wezterm?',
+			choices = {
+				{ label = 'no, stay' },
+				{ label = 'yes, quit everything' },
+			},
+			action = wezterm.action_callback(function(window, pane, _id, label)
+				if label == 'yes, quit everything' then
+					window:perform_action(act.QuitApplication, pane)
+				end
+			end),
+		},
 	},
-	{
-		key = 'x',
-		mods = 'LEADER',
-		action = wezterm.action.QuitApplication,
-	},
-
 }
 
 -- and finally, return the configuration to wezterm

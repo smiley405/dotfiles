@@ -27,7 +27,6 @@ wk.add({
 	{ '<leader>c',  group = 'code' },
 	{ '<leader>f',  group = 'find / file' },
 	{ '<leader>g',  group = 'git' },
-	{ '<leader>n',  group = 'neo-tree' },
 	{ '<leader>t',  group = 'tab' },
 	{ '<leader>v',  group = 'lsp / hunk' },
 	-- without this the popup shows a bare '+1 keymap' for <leader>vrn
@@ -57,7 +56,7 @@ wk.add({
 
 	-- config/rooter.lua, config/qf.lua
 	{ '<leader>a',  desc = 'Toggle rooter (auto cwd)' },
-	-- <leader>q likewise: oil shadows it, so its desc lives in config/qf.lua
+	-- <leader>q is labelled in config/qf.lua, next to the mapping itself
 
 	-- config/flash.lua
 	{ '<leader>s',  desc = 'Flash to char',                     mode = { 'n', 'x', 'o' } },
@@ -82,7 +81,6 @@ wk.add({
 
 	-- built-ins worth labelling
 	{ '-',          desc = 'Open parent directory (netrw)' },
-	{ '_',          desc = 'Open parent directory (oil)' },
 	{
 		'<leader>?',
 		function() wk.show({ global = false }) end,

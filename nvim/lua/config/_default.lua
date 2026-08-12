@@ -33,6 +33,18 @@ vim.opt.foldmethod = 'manual'
 vim.opt.foldenable = true
 
 vim.opt.termguicolors = true
+
+-- WSL only: nvim's clipboard probe scans $PATH for every tool it misses, and
+-- the /mnt/c entries make that ~190ms of every startup. Naming the provider
+-- skips the probe (`:h g:clipboard`). Gated, because elsewhere the probe is
+-- cheap and right -- Fedora wants wl-copy on wayland, Windows win32yank. Name
+-- 'wl-copy' here instead if wl-clipboard ever lands on this box.
+if vim.fn.has('wsl') == 1
+	and (vim.env.DISPLAY or '') ~= ''
+	and vim.fn.executable('xclip') == 1 then
+	vim.g.clipboard = 'xclip'
+end
+
 -- Use the system clipboard for normal yank/paste
 vim.opt.clipboard = "unnamedplus"
 

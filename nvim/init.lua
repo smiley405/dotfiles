@@ -26,6 +26,7 @@ local eager = {
 local deferred = {
 	'menu',
 	'autopairs',
+	-- ahead of 'lsp': puts cmp-nvim-lsp on 'runtimepath' for default_capabilities()
 	'completion',
 	'comment',
 	'fzf',
@@ -33,15 +34,11 @@ local deferred = {
 	'flash',
 	'scrollview',
 	'colorizer',
-	-- safe to defer: neo-tree is the directory handler here
-	-- (oil has default_file_explorer = false)
-	'oil',
 	-- keymaps only; yazi itself runs in a wezterm pane, not in nvim
 	'yazi',
 	'outline',
 	'git',
 	'lsp',
-	'neotree',
 	-- last: its spec only labels mappings the entries above have defined
 	'whichkey',
 }

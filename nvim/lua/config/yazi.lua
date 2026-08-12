@@ -7,8 +7,17 @@
 local repo = vim.fn.fnamemodify(vim.fn.resolve(vim.fn.stdpath('config')), ':h')
 local script = repo .. '/bin/yazi-wez'
 
--- wezterm.exe on PATH means WSL with interop; native linux has plain wezterm
-local wezterm = vim.fn.executable('wezterm.exe') == 1 and 'wezterm.exe' or 'wezterm'
+-- Resolved on first use, not at startup: executable() walks every $PATH entry,
+-- and the /mnt/c ones under WSL made this ~88ms of every launch.
+local wezterm
+
+local function wezterm_cmd()
+	if not wezterm then
+		-- wezterm.exe on PATH means WSL with interop; native linux has plain wezterm
+		wezterm = vim.fn.executable('wezterm.exe') == 1 and 'wezterm.exe' or 'wezterm'
+	end
+	return wezterm
+end
 
 -- Cached: nvim does not change pane during a session.
 local pane_id
@@ -21,7 +30,7 @@ local function nvim_pane()
 	pane_id = tonumber(vim.env.WEZTERM_PANE or '')
 	if pane_id then return pane_id end
 
-	local res = vim.system({ wezterm, 'cli', 'list-clients', '--format', 'json' },
+	local res = vim.system({ wezterm_cmd(), 'cli', 'list-clients', '--format', 'json' },
 		{ text = true }):wait()
 	if res.code ~= 0 then return nil end
 
@@ -55,7 +64,7 @@ local function open(start)
 	for _, a in ipairs(args) do run = run .. ' ' .. vim.fn.shellescape(a) end
 
 	vim.system({
-		wezterm, 'cli', 'split-pane',
+		wezterm_cmd(), 'cli', 'split-pane',
 		'--pane-id', tostring(pane),
 		'--right', '--percent', '40',
 		'--', 'bash', '-lc', run,

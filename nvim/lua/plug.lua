@@ -40,7 +40,6 @@ Plug 'kevinhwang91/nvim-bqf'
 Plug 'folke/flash.nvim'
 Plug 'nvim-lualine/lualine.nvim'
 Plug 'petertriho/nvim-scrollbar'
-Plug 'stevearc/oil.nvim'
 Plug 'hedyhli/outline.nvim'
 -- popup listing the keymaps behind whatever prefix was typed
 Plug 'folke/which-key.nvim'
@@ -50,8 +49,9 @@ Plug 'folke/noice.nvim'
 -- modular qol collection; see config/snacks.lua for what is switched on
 Plug 'folke/snacks.nvim'
 
--- tree file explorer
-Plug 'nvim-neo-tree/neo-tree.nvim'
+-- No in-editor tree: yazi in a wezterm split is the explorer (config/yazi.lua),
+-- and netrw handles `nvim <dir>` and `-`. These two stay as libraries -- noice
+-- needs nui, lualine and outline need devicons.
 Plug 'MunifTanjim/nui.nvim'
 Plug 'nvim-tree/nvim-web-devicons'
 
