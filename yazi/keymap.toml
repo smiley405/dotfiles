@@ -1,14 +1,19 @@
 # yazi -> neovim, via bin/yazi-wez (reverse direction: nvim/lua/config/yazi.lua).
-# <C-o>/<C-t> are unbound by default, so nothing native is shadowed; $@ is the
-# selection, falling back to the hovered file. Inside a session started from
-# nvim, yazi-wez reuses that nvim rather than spawning a second one.
+# <C-o>/<C-t> are unbound by default, so nothing native is shadowed.
+#
+# %s is yazi's own substitution for the selection (the hovered file if none),
+# already shell-quoted and identical everywhere. The `"$@"` this used to pass
+# stopped being filled in at 26.x, silently killing both keys on every platform.
+#
+# Started from nvim, yazi-wez reuses that nvim. On windows the bare name finds
+# bin/yazi-wez.cmd.
 
 [[mgr.prepend_keymap]]
 on = "<C-o>"
-run = 'shell -- yazi-wez edit "$@"'
+run = 'shell -- yazi-wez edit %s'
 desc = "Open in nvim (wezterm split)"
 
 [[mgr.prepend_keymap]]
 on = "<C-t>"
-run = 'shell -- yazi-wez edit --tab "$@"'
+run = 'shell -- yazi-wez edit --tab %s'
 desc = "Open in nvim (new wezterm tab)"
