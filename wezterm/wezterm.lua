@@ -78,6 +78,9 @@ end
 )
 
 config.check_for_updates = false
+-- to make the scrollbar visible, you might need to add settings.json this { "tui": "default" }
+-- something like that in other tui app's config settings
+config.enable_scroll_bar = true
 
 -- On Windows, start straight in WSL Ubuntu instead of cmd.exe. Everywhere else
 -- (linux/macos) this is a no-op and the native login shell is used.
