@@ -57,3 +57,17 @@ EOF
 
 Not wezterm-specific: kitty, foot, ghostty, konsole, VTE and Windows Terminal
 all consume OSC 7.
+
+## Clipboard
+
+Neovim shells out for the system clipboard, so `clipboard=unnamedplus`
+(`nvim/lua/config/_default.lua`) expects a tool to be installed:
+
+1. WSL -- `xclip`; WSLg bridges it to the Windows clipboard
+2. Fedora -- `wl-clipboard` on wayland, `xclip` on X11
+3. Windows -- `scoop install win32yank`, otherwise every paste spawns powershell
+
+Neovim finds all three on its own. The exception is WSL, where `_default.lua`
+names xclip outright: autodetection scans `$PATH` for every tool it misses, and
+the `/mnt/c` entries there make that ~190ms of each startup. `:checkhealth
+vim.provider` shows which one was picked.

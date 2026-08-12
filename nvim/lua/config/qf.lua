@@ -10,9 +10,8 @@ vim.cmd([[
 	augroup END
 ]])
 
--- Lua, not `noremap` above, so it can carry a desc: oil shadows this key, and a
--- which-key spec entry would label it 'Close quickfix' there too.
--- Mode '' matches :noremap (n/v/o).
+-- Lua, not `noremap` above, so it can carry a desc without a which-key spec
+-- entry. Mode '' matches :noremap (n/v/o).
 vim.keymap.set('', '<leader>q', '<cmd>ccl<CR>',
 	{ silent = true, desc = 'Close quickfix' })
 

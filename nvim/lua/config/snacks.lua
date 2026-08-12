@@ -48,7 +48,7 @@ snacks.setup({
 -- On-demand modules -- no setup() entry, loaded on first use of the mapping.
 
 -- sends workspace/willRenameFiles first, so ts_ls rewrites imports before the
--- file moves (the neo-tree side is wired in config/neotree.lua)
+-- file moves
 vim.keymap.set('n', '<leader>fr', function() Snacks.rename.rename_file() end,
 	{ desc = 'Rename file (update LSP imports)' })
 

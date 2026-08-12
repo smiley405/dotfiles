@@ -7,7 +7,6 @@ local excluded_filetypes = {
 	'undotree',
 	'qf',
 	'vim-plug',
-	'oil',
 	'snacks_picker_list',
 	'DiffviewFiles',
 	'DiffviewFileHistory',
