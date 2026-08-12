@@ -236,7 +236,7 @@ cmp.setup({
 		['<C-j>'] = cmp.mapping.select_next_item { behavior = cmp.SelectBehavior.Select },
 		['<C-d>'] = cmp.mapping(cmp.mapping.scroll_docs(-4), { 'i', 'c' }),
 		['<C-f>'] = cmp.mapping(cmp.mapping.scroll_docs(4), { 'i', 'c' }),
-		['<C-Space>'] = cmp.mapping(cmp.mapping.complete(), { 'i', 'c' }),
+		-- no <C-Space>: wezterm's leader, and the menu is already open anyway
 		['<C-y>'] = cmp.config.disable,
 		['<C-e>'] = cmp.mapping {
 			i = cmp.mapping.abort(),
