@@ -162,8 +162,13 @@ config.keys = {
 	-- LEADER q -- close this pane
 	{ key = 'q', mods = 'LEADER', action = act.CloseCurrentPane { confirm = true } },
 
-	-- LEADER t/i/r -- tabs. No vim equivalent.
+	-- LEADER t/T/i/r -- tabs. No vim equivalent.
 	{ key = 't', mods = 'LEADER', action = act.SpawnTab 'CurrentPaneDomain' },
+
+	-- LEADER T -- a tab in the native domain. CurrentPaneDomain inherits and never
+	-- switches, so on windows every tab descends from the WSL default; this is the
+	-- keyboard way out, and how a windows nvim's <leader>- reaches yazi-wez.ps1.
+	{ key = 'T', mods = 'LEADER', action = act.SpawnTab { DomainName = 'local' } },
 	{ key = 'i', mods = 'LEADER', action = act.ShowTabNavigator },
 	{
 		key = 'r',

@@ -2,10 +2,15 @@
 -- file back over --remote and closes the split. A real pane (not yazi.nvim's
 -- :terminal float) keeps image previews and yazi's own keys intact.
 -- Reverse direction: yazi/keymap.toml, same script.
+--
+-- The mux spawns a pane's program without a shell, so the script has two halves:
+-- bin/yazi-wez under bash, bin/yazi-wez.ps1 under powershell. WSL nvim is a
+-- linux process, so it takes the unix one.
 
--- ~/.config/nvim is a symlink into the repo; resolve it to find bin/
+-- the config dir is a symlink into the repo; resolve it to find bin/
 local repo = vim.fn.fnamemodify(vim.fn.resolve(vim.fn.stdpath('config')), ':h')
-local script = repo .. '/bin/yazi-wez'
+local is_win = vim.fn.has('win32') == 1
+local script = repo .. (is_win and '/bin/yazi-wez.ps1' or '/bin/yazi-wez')
 
 -- Resolved on first use, not at startup: executable() walks every $PATH entry,
 -- and the /mnt/c ones under WSL made this ~88ms of every launch.
@@ -13,10 +18,20 @@ local wezterm
 
 local function wezterm_cmd()
 	if not wezterm then
-		-- wezterm.exe on PATH means WSL with interop; native linux has plain wezterm
+		-- wezterm.exe on windows and on WSL with interop; plain wezterm on linux
 		wezterm = vim.fn.executable('wezterm.exe') == 1 and 'wezterm.exe' or 'wezterm'
 	end
 	return wezterm
+end
+
+-- Same, and only ever needed on windows.
+local powershell
+
+local function powershell_cmd()
+	if not powershell then
+		powershell = vim.fn.executable('pwsh') == 1 and 'pwsh' or 'powershell'
+	end
+	return powershell
 end
 
 -- Cached: nvim does not change pane during a session.
@@ -43,6 +58,22 @@ local function nvim_pane()
 	return pane_id
 end
 
+-- Windows panes inherit the mux's environment, so they skip the PATH dance.
+local function pane_program(args)
+	if is_win then
+		local prog = { powershell_cmd(), '-NoLogo', '-NoProfile', '-ExecutionPolicy', 'Bypass',
+			'-File', script }
+		return vim.list_extend(prog, args)
+	end
+
+	-- `bash -l` skips ~/.bashrc, where brew puts nvim/yazi/jq on PATH, so carry
+	-- nvim's own PATH into the pane
+	local run = 'export PATH=' .. vim.fn.shellescape(vim.env.PATH) .. '; exec '
+		.. vim.fn.shellescape(script)
+	for _, a in ipairs(args) do run = run .. ' ' .. vim.fn.shellescape(a) end
+	return { 'bash', '-lc', run }
+end
+
 local function open(start)
 	local pane = nvim_pane()
 	if not pane then
@@ -55,20 +86,18 @@ local function open(start)
 	local server = vim.v.servername
 	if server == '' then server = vim.fn.serverstart() end
 
-	local args = { script, 'pick', server, tostring(pane) }
+	local args = { 'pick', server, tostring(pane) }
 	if start and start ~= '' then args[#args + 1] = start end
 
-	-- `bash -l` skips ~/.bashrc, where brew puts nvim/yazi/jq on PATH, so carry
-	-- nvim's own PATH into the pane
-	local run = 'export PATH=' .. vim.fn.shellescape(vim.env.PATH) .. '; exec'
-	for _, a in ipairs(args) do run = run .. ' ' .. vim.fn.shellescape(a) end
-
-	vim.system({
+	local cmd = {
 		wezterm_cmd(), 'cli', 'split-pane',
 		'--pane-id', tostring(pane),
 		'--right', '--percent', '40',
-		'--', 'bash', '-lc', run,
-	}, { text = true }, function(res)
+		'--',
+	}
+	vim.list_extend(cmd, pane_program(args))
+
+	vim.system(cmd, { text = true }, function(res)
 		if res.code ~= 0 then
 			vim.schedule(function()
 				vim.notify('yazi: ' .. (res.stderr ~= '' and res.stderr or 'split-pane failed'),

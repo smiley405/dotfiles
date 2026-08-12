@@ -69,10 +69,16 @@ cmd_pick() {
 
 	# empty when yazi was quit with q/<Esc>
 	if [ -s "$chooser" ]; then
-		local files=()
-		mapfile -t files < "$chooser"
-		nvim --server "$server" --remote "${files[@]}" ||
-			printf 'yazi-wez: could not reach nvim at %s\n' "$server" >&2
+		# not mapfile (bash 4+; macos ships 3.2); the || catches a missing newline
+		local files=() line
+		while IFS= read -r line || [ -n "$line" ]; do
+			if [ -n "$line" ]; then files+=("$line"); fi
+		done < "$chooser"
+
+		if [ ${#files[@]} -gt 0 ]; then
+			nvim --server "$server" --remote "${files[@]}" ||
+				printf 'yazi-wez: could not reach nvim at %s\n' "$server" >&2
+		fi
 	fi
 
 	wez activate-pane --pane-id "$pane" >/dev/null
