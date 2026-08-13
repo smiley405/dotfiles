@@ -78,8 +78,12 @@ cmd_pick() {
 		done < "$chooser"
 
 		if [ ${#files[@]} -gt 0 ]; then
-			nvim --server "$server" --remote "${files[@]}" ||
+			if ! nvim --server "$server" --remote "${files[@]}"; then
 				printf 'yazi-wez: could not reach nvim at %s\n' "$server" >&2
+			elif [ "$pane" = '-' ]; then
+				# nothing gets focus by itself here, so say where the file went
+				printf 'sent to nvim %s -- switch back to it\n' "$server"
+			fi
 		fi
 	fi
 

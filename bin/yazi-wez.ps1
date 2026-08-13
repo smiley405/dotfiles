@@ -82,7 +82,12 @@ function Invoke-Pick {
 
 		if ($files.Count) {
 			& nvim --server $Server --remote @files
-			if ($LASTEXITCODE -ne 0) { Warn "could not reach nvim at $Server" }
+			if ($LASTEXITCODE -ne 0) {
+				Warn "could not reach nvim at $Server"
+			} elseif ($Pane -eq '-') {
+				# nothing gets focus by itself here, so say where the file went
+				Write-Host "sent to nvim $Server -- switch back to it"
+			}
 		}
 	} finally {
 		Remove-Item -LiteralPath $chooser -Force -ErrorAction SilentlyContinue
