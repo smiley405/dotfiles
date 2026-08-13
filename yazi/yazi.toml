@@ -1,2 +1,16 @@
 [mgr]
 show_hidden = true
+
+# Not $EDITOR: windows ignores it and hardcodes `code`. Bare, so each yazi
+# finds the nvim on its own side.
+[opener]
+edit = [
+	{ run = "nvim %s", desc = "nvim", block = true },
+]
+
+# yazi types files with file(1), which windows lacks -- install.ps1 points
+# YAZI_FILE_ONE at git's copy. Untyped files land here rather than in `start`.
+[open]
+prepend_rules = [
+	{ mime = "null/file1-not-found", use = [ "edit", "open", "reveal" ] },
+]
