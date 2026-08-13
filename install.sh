@@ -57,9 +57,11 @@ printf 'dotfiles: linking from %s\n' "$repo"
 
 link "$repo/nvim" "$config/nvim"
 link "$repo/yazi" "$config/yazi"
-link "$repo/bin/yazi-wez" "$bindir/yazi-wez"
-# never fatal: set -e would otherwise abandon the rest of the install
-chmod +x "$repo/bin/yazi-wez" 2>/dev/null || info "note    could not chmod +x bin/yazi-wez"
+for script in yazi-wez reveal; do
+	link "$repo/bin/$script" "$bindir/$script"
+	# never fatal: set -e would otherwise abandon the rest of the install
+	chmod +x "$repo/bin/$script" 2>/dev/null || info "note    could not chmod +x bin/$script"
+done
 
 if is_wsl; then
 	info "skip    wezterm (windows-side under WSL -- run install.ps1 there)"
@@ -91,5 +93,5 @@ done
 
 case ":${PATH-}:" in
 	*":$bindir:"*) ;;
-	*) info "note    $bindir is not on \$PATH -- yazi's <C-o>/<C-t> need it there" ;;
+	*) info "note    $bindir is not on \$PATH -- yazi's <C-o>/<C-t>/<C-e> need it there" ;;
 esac

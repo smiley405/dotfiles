@@ -1,0 +1,25 @@
+#!/usr/bin/env bash
+#
+# Open a directory in the system file manager -- yazi's <C-e>. Yazi's y/p use
+# its own register, never the system clipboard, so the manager does the pasting.
+#
+# Windows has its own entry point, bin/reveal.cmd.
+
+set -euo pipefail
+
+# no argument: yazi runs us in its own cwd, which is the usual case
+dir=${1:-.}
+[ -d "$dir" ] || dir=$(dirname -- "$dir")
+
+# explorer.exe on PATH means WSL: it is windows-side, wants a windows path, and
+# exits non-zero even when it worked
+if command -v explorer.exe >/dev/null 2>&1; then
+	explorer.exe "$(wslpath -w -- "$dir")" || true
+elif [ "$(uname -s)" = Darwin ]; then
+	open -- "$dir"
+elif command -v xdg-open >/dev/null 2>&1; then
+	xdg-open "$dir" >/dev/null 2>&1
+else
+	printf 'reveal: no file manager found -- install xdg-utils\n' >&2
+	exit 1
+fi

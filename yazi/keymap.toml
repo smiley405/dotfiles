@@ -17,3 +17,13 @@ desc = "Open in nvim (wezterm split)"
 on = "<C-t>"
 run = 'shell -- yazi-wez edit --tab %s'
 desc = "Open in nvim (new wezterm tab)"
+
+# Paste into yazi's cwd from anywhere: yazi's y/p use its own register, not the
+# system clipboard, so hand the directory to the file manager and let it paste.
+# bin/reveal picks one per platform; windows finds bin/reveal.cmd. <C-e> is only
+# bound in input mode by default.
+
+[[mgr.prepend_keymap]]
+on = "<C-e>"
+run = 'shell -- reveal'
+desc = "Open cwd in the system file manager"
