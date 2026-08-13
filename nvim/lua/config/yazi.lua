@@ -58,32 +58,43 @@ local function nvim_pane()
 	return pane_id
 end
 
--- split-pane always lands in the target pane's domain -- it takes no --domain --
--- so a windows nvim sitting in a WSL pane would try to run powershell inside the
--- VM, and the split would die on the spot. wezterm reports no domain over the
--- cli, but a WSL pane's cwd is a posix path where a windows one has a drive.
-local pane_native
+-- split-pane lands in the target pane's domain and takes no --domain, so the
+-- helper cannot be split straight into a pane of the other kind: `cmd.exe` typed
+-- at a WSL prompt, `wsl` typed at a cmd one. wezterm reports no domain over the
+-- cli, but a windows pane's cwd carries a drive letter and a linux one does not.
+local is_wsl = not is_win and (vim.env.WSL_DISTRO_NAME or '') ~= ''
+
+local pane_checked, pane_native
 
 local function pane_is_native(pane)
-	if pane_native ~= nil then return pane_native end
-	pane_native = true
+	if pane_checked then return pane_native end
+	pane_checked = true
 
 	local res = vim.system({ wezterm_cmd(), 'cli', 'list', '--format', 'json' },
 		{ text = true }):wait()
-	if res.code ~= 0 then return pane_native end
+	if res.code ~= 0 then return nil end
 
 	local ok, panes = pcall(vim.json.decode, (res.stdout:gsub('\r', '')))
-	if not ok or type(panes) ~= 'table' then return pane_native end
+	if not ok or type(panes) ~= 'table' then return nil end
 
 	for _, p in ipairs(panes) do
 		if p.pane_id == pane and type(p.cwd) == 'string' and p.cwd ~= '' then
-			-- file:///C:/... or file://host/C:/... both leave /C: once the
-			-- scheme and authority are gone; a linux cwd leaves /home/...
+			-- file:///C:/... and file://host/C:/... both leave /C:
 			pane_native = p.cwd:gsub('^file://[^/]*', ''):match('^/%a:') ~= nil
 			break
 		end
 	end
 	return pane_native
+end
+
+-- Where the helper has to be spawned, or nil when the pane already matches it
+-- and a plain split will do. nil too when there was nothing to go on.
+local function other_domain(pane)
+	local native = pane_is_native(pane)
+	if native == nil then return nil end
+	if is_win and not native then return 'local' end
+	if is_wsl and native then return 'WSL:' .. vim.env.WSL_DISTRO_NAME end
+	return nil
 end
 
 -- Windows panes inherit the mux's environment, so they skip the PATH dance.
@@ -110,13 +121,6 @@ local function open(start)
 		return
 	end
 
-	if is_win and not pane_is_native(pane) then
-		vim.notify('yazi: this is a WSL pane, so the split cannot run the windows '
-			.. 'helper. Open a windows pane with LEADER T, or use the WSL nvim here.',
-			vim.log.levels.WARN)
-		return
-	end
-
 	-- nvim always listens, but --remote needs the address spelled out
 	local server = vim.v.servername
 	if server == '' then server = vim.fn.serverstart() end
@@ -124,21 +128,33 @@ local function open(start)
 	local args = { 'pick', server, tostring(pane) }
 	if start and start ~= '' then args[#args + 1] = start end
 
-	local cmd = {
-		wezterm_cmd(), 'cli', 'split-pane',
-		'--pane-id', tostring(pane),
-		'--right', '--percent', '40',
-		'--',
-	}
-	vim.list_extend(cmd, pane_program(args))
+	local function failed(res)
+		if res.code == 0 then return false end
+		vim.schedule(function()
+			vim.notify('yazi: ' .. (res.stderr ~= '' and res.stderr or 'split-pane failed'),
+				vim.log.levels.ERROR)
+		end)
+		return true
+	end
 
+	local function split(tail)
+		local cmd = { wezterm_cmd(), 'cli', 'split-pane', '--pane-id', tostring(pane),
+			'--right', '--percent', '40' }
+		vim.system(vim.list_extend(cmd, tail), { text = true }, failed)
+	end
+
+	local domain = other_domain(pane)
+	if not domain then
+		return split(vim.list_extend({ '--' }, pane_program(args)))
+	end
+
+	-- spawn it where it belongs, then adopt that pane as the split
+	local cmd = { wezterm_cmd(), 'cli', 'spawn', '--domain-name', domain,
+		'--pane-id', tostring(pane), '--' }
+	vim.list_extend(cmd, pane_program(args))
 	vim.system(cmd, { text = true }, function(res)
-		if res.code ~= 0 then
-			vim.schedule(function()
-				vim.notify('yazi: ' .. (res.stderr ~= '' and res.stderr or 'split-pane failed'),
-					vim.log.levels.ERROR)
-			end)
-		end
+		if failed(res) then return end
+		split({ '--move-pane-id', vim.trim((res.stdout or ''):gsub('\r', '')) })
 	end)
 end
 
