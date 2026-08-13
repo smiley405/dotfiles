@@ -63,6 +63,10 @@ platform:
 Under WSL neovim is a linux process and takes the unix half, even though wezterm
 is windows-side.
 
+`wezterm cli split-pane` cannot cross domains, so when nvim and its pane are of
+different kinds the helper is spawned in its own domain and the pane moved into
+the split.
+
 The keymaps pass `%s`, yazi's own substitution for the selection -- already
 shell-quoted and the same everywhere. The old `"$@"` stopped being filled in at
 yazi 26.x, which silently killed both keys on every platform.
@@ -73,9 +77,11 @@ On Windows the terminal opens straight into WSL Ubuntu (`config.default_domain`
 in `wezterm/wezterm.lua`, guarded by `wezterm.target_triple`); on linux that
 guard is skipped and the native login shell is used.
 
-`CurrentPaneDomain` inherits and never switches, so `LEADER t` from that first
-WSL tab only yields more WSL tabs. `LEADER T` spawns into the `local` domain --
-the keyboard route to a windows session, and to `bin/yazi-wez.ps1`.
+Splits and tabs follow the program in the pane rather than the pane's domain:
+`cmd.exe` at a WSL prompt splits into cmd, `wsl` at a cmd prompt into bash.
+wezterm cannot see into the VM, which is the tell -- a WSL pane running bash
+reports wslhost.exe, one running a windows program reports that program.
+`LEADER T` forces a windows tab regardless.
 
 WezTerm is a Windows app, so it reads its config from
 `C:\Users\<you>\.config\wezterm\wezterm.lua` -- which is what `install.ps1`
