@@ -129,7 +129,7 @@ Set-Junction -Target (Join-Path $repo 'nvim')    -Link (Join-Path $env:LOCALAPPD
 Set-Junction -Target (Join-Path $repo 'yazi')    -Link (Join-Path $env:APPDATA 'yazi\config')
 Set-Junction -Target (Join-Path $repo 'wezterm') -Link (Join-Path $env:USERPROFILE '.config\wezterm')
 
-# yazi calls `yazi-wez` by bare name, which needs bin\yazi-wez.cmd on PATH
+# yazi calls `yazi-wez` and `reveal` by bare name, which needs bin\*.cmd on PATH
 Write-Host 'dotfiles: PATH'
 Add-UserPath -Dir $bin
 
