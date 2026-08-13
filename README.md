@@ -6,6 +6,7 @@ External dependencies:
 1. [rg](https://github.com/sharkdp/fd)
 2. [fd](https://github.com/BurntSushi/ripgrep)
 3. [yazi](https://github.com/sxyazi/yazi) + jq -- for the file manager keymaps
+4. `file` -- yazi's mime typing; on windows it comes from git for windows
 
 Terminal Using:
 1. [wezterm](https://github.com/wez/wezterm)
@@ -70,6 +71,16 @@ the split.
 The keymaps pass `%s`, yazi's own substitution for the selection -- already
 shell-quoted and the same everywhere. The old `"$@"` stopped being filled in at
 yazi 26.x, which silently killed both keys on every platform.
+
+`<Enter>` opens in neovim too, in yazi's own pane. `yazi.toml` names `nvim`
+rather than `$EDITOR`, which windows ignores in favour of a hardcoded `code`,
+and names it bare -- openers never cross domains the way `yazi-wez` does, so
+each yazi finds the nvim on its own side.
+
+yazi types files by running `file(1)`, which windows does not ship; without
+one nothing matches the mime rules and `start` claims every file. So
+`install.ps1` points `YAZI_FILE_ONE` at the copy git for windows keeps in
+`usr\bin`, and untyped files fall to neovim rather than to that dialog.
 
 ## Windows + WSL
 

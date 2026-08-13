@@ -74,6 +74,30 @@ function Add-UserPath {
 	Info "path    added $Dir to the user PATH (restart wezterm to pick it up)"
 }
 
+function Set-UserEnv {
+	param([string]$Name, [string]$Value)
+
+	if ([Environment]::GetEnvironmentVariable($Name, 'User') -eq $Value) {
+		Info "ok      $Name already set"
+		return
+	}
+
+	[Environment]::SetEnvironmentVariable($Name, $Value, 'User')
+	Info "env     $Name = $Value (restart wezterm to pick it up)"
+}
+
+function Find-File1 {
+	# git for windows keeps one in usr\bin, off PATH, under either root
+	$roots = @($env:ProgramFiles, ${env:ProgramFiles(x86)}) | Where-Object { $_ }
+	$candidates = @($roots | ForEach-Object { Join-Path $_ 'Git\usr\bin\file.exe' })
+	$candidates += (Join-Path $env:USERPROFILE 'scoop\apps\git\current\usr\bin\file.exe')
+
+	foreach ($candidate in $candidates) {
+		if (Test-Path -LiteralPath $candidate) { return $candidate }
+	}
+	return $null
+}
+
 Write-Host "dotfiles: linking from $repo"
 
 Set-Junction -Target (Join-Path $repo 'nvim')    -Link (Join-Path $env:LOCALAPPDATA 'nvim')
@@ -83,6 +107,19 @@ Set-Junction -Target (Join-Path $repo 'wezterm') -Link (Join-Path $env:USERPROFI
 # yazi calls `yazi-wez` by bare name, which needs bin\yazi-wez.cmd on PATH
 Write-Host 'dotfiles: PATH'
 Add-UserPath -Dir $bin
+
+# yazi types files with file(1); without one, `start` claims every file
+Write-Host 'dotfiles: file(1)'
+if (Get-Command 'file' -ErrorAction SilentlyContinue) {
+	Info "ok      file is on PATH"
+} else {
+	$file1 = Find-File1
+	if ($file1) {
+		Set-UserEnv -Name 'YAZI_FILE_ONE' -Value $file1
+	} else {
+		Info "MISSING file -- install git for windows, then re-run"
+	}
+}
 
 Write-Host 'dotfiles: dependencies'
 foreach ($tool in 'nvim', 'yazi', 'rg', 'fd', 'jq', 'wezterm', 'pwsh') {
