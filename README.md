@@ -13,9 +13,8 @@ Terminal Using:
 
 ## Install
 
-One entry point per platform. Both are idempotent, both move anything real in
-the way to a `.bak.<timestamp>` copy rather than deleting it, and both report
-missing dependencies.
+One entry point per platform, both idempotent. Anything real in the way is
+moved to a `.bak.<timestamp>` copy, never deleted.
 
 ```sh
 ./install.sh        # linux, macos, WSL
@@ -29,90 +28,81 @@ pwsh -ExecutionPolicy Bypass -File install.ps1   # windows -- no admin needed
 | --- | --- | --- |
 | neovim | `~/.config/nvim` | `%LOCALAPPDATA%\nvim` |
 | yazi | `~/.config/yazi` | `%APPDATA%\yazi\config` |
+| lazygit | `~/.config/lazygit` | `%LOCALAPPDATA%\lazygit` |
 | wezterm | `~/.config/wezterm` (native only) | `%USERPROFILE%\.config\wezterm` |
 | `yazi-wez` | `~/.local/bin/yazi-wez` | `bin\` appended to the user PATH |
 
 Windows gets junctions, not symlinks: a symlink needs elevation or developer
-mode, a junction needs neither.
+mode, a junction needs neither. A junction also cannot point into the VM over
+`\\wsl.localhost`, so a windows box used both ways needs two checkouts and both
+installers.
 
 The links are on the directories, so a new file under `nvim/` is live with no
-re-run; a new top-level tool is not, and needs a line in each installer. That
-list stays explicit because the mapping is not mechanical -- `yazi/` lands on
-`~/.config/yazi` but `%APPDATA%\yazi\config`, and `bash/` and `pwsh/` (sourced
-by path) and `bin/` (on PATH) are not linked at all.
-
-A windows box used both ways needs two checkouts and both installers; neither
-side can reach the other, since a junction cannot point into the VM over
-`\\wsl.localhost`. A linux box is just `./install.sh`, which owns wezterm too.
+re-run. A new top-level tool needs a line in each installer, because the
+mapping is not mechanical: `yazi/` lands on `~/.config/yazi` but
+`%APPDATA%\yazi\config`, lazygit wants `~/Library/Application Support/lazygit`
+on macos unless `XDG_CONFIG_HOME` is set, and `bash/`, `pwsh/` and `bin/` are
+not linked at all.
 
 ## yazi <-> neovim
 
 `<leader>-` in neovim opens yazi in a wezterm split; `<Enter>` there sends the
-file back and closes the split. In yazi, `<C-o>` / `<C-t>` open the selection in
-neovim as a split or a new tab. Both go through `wezterm cli`, so yazi runs in a
-real pane and keeps its own keys and image previews.
+file back and closes it. In yazi, `<C-o>` and `<C-t>` open the selection in
+neovim as a split or a new tab. Both go through `wezterm cli`, so yazi runs in
+a real pane and keeps its own keys and image previews.
 
-Outside wezterm -- the test is `TERM_PROGRAM` -- there is no pane to split, so
-the keys copy `yazi-wez pick <server> - <path>` and show it in a notification.
-Pasted into any shell it starts yazi at the same path and still talking to that
-neovim; `-` for the pane id only means nothing is refocused when yazi exits.
+Outside wezterm (`TERM_PROGRAM`) there is no pane to split, so the keys copy
+`yazi-wez pick <server> - <path>` into a notification instead. Pasted anywhere
+it starts yazi at the same path, still talking to that neovim.
 
 The mux spawns a pane's program without a shell, so the helper has one half per
 platform:
 
-- `bin/yazi-wez` -- linux, macos, WSL. Runs under `bash -lc`, which skips
-  `~/.bashrc`, so neovim's `$PATH` is carried into the pane.
-- `bin/yazi-wez.ps1` -- native windows, reached via `bin/yazi-wez.cmd` because
-  yazi's `shell` goes through cmd, which resolves `.cmd` but not `.ps1`. Windows
-  panes inherit the mux's environment, so no `$PATH` juggling.
+- `bin/yazi-wez` -- linux, macos, WSL. Runs under `bash -lc`, skipping
+  `~/.bashrc`, so neovim's `$PATH` reaches the pane.
+- `bin/yazi-wez.ps1` -- windows, reached via `bin/yazi-wez.cmd`, since yazi's
+  `shell` goes through cmd, which resolves `.cmd` but not `.ps1`.
 
-Under WSL neovim is a linux process and takes the unix half, even though wezterm
-is windows-side.
+Under WSL neovim is a linux process and takes the unix half, even though
+wezterm is windows-side. `wezterm cli split-pane` cannot cross domains, so when
+nvim and its pane differ the helper spawns in its own domain and the pane is
+moved into the split.
 
-`wezterm cli split-pane` cannot cross domains, so when nvim and its pane are of
-different kinds the helper is spawned in its own domain and the pane moved into
-the split.
+Two things that bite:
 
-The keymaps pass `%s`, yazi's own substitution for the selection -- already
-shell-quoted and the same everywhere. The old `"$@"` stopped being filled in at
-yazi 26.x, which silently killed both keys on every platform.
+- The keymaps pass `%s`, yazi's own substitution -- already shell-quoted, same
+  everywhere. The old `"$@"` stopped being filled in at yazi 26.x and silently
+  killed both keys on every platform.
+- yazi types files with `file(1)`, which windows lacks. Without it nothing
+  matches the mime rules and `start` claims everything, so `install.ps1` points
+  `YAZI_FILE_ONE` at the copy git for windows keeps in `usr\bin`.
 
-`<Enter>` opens in neovim too, in yazi's own pane. `yazi.toml` names `nvim`
-rather than `$EDITOR`, which windows ignores in favour of a hardcoded `code`,
-and names it bare -- openers never cross domains the way `yazi-wez` does, so
-each yazi finds the nvim on its own side.
-
-yazi types files by running `file(1)`, which windows does not ship; without
-one nothing matches the mime rules and `start` claims every file. So
-`install.ps1` points `YAZI_FILE_ONE` at the copy git for windows keeps in
-`usr\bin`, and untyped files fall to neovim rather than to that dialog.
+`yazi.toml` names `nvim` bare, not `$EDITOR` -- windows ignores `$EDITOR` for a
+hardcoded `code`, and openers never cross domains the way `yazi-wez` does.
 
 ## Windows + WSL
 
-On Windows the terminal opens straight into WSL Ubuntu (`config.default_domain`
-in `wezterm/wezterm.lua`, guarded by `wezterm.target_triple`); on linux that
-guard is skipped and the native login shell is used.
+The terminal opens straight into WSL Ubuntu (`config.default_domain` in
+`wezterm/wezterm.lua`, guarded by `wezterm.target_triple`; on linux the guard
+is skipped).
 
-Splits and tabs follow the program in the pane rather than the pane's domain:
+Splits and tabs follow the program in the pane, not the pane's domain:
 `cmd.exe` at a WSL prompt splits into cmd, `wsl` at a cmd prompt into bash.
-wezterm cannot see into the VM, which is the tell -- a WSL pane running bash
-reports wslhost.exe, one running a windows program reports that program.
 `LEADER T` forces a windows tab regardless.
 
-WezTerm is a Windows app, so it reads its config from
-`C:\Users\<you>\.config\wezterm\wezterm.lua` -- which is what `install.ps1`
-links up. Run it from a windows-side checkout; a junction cannot point into the
-VM over `\\wsl.localhost`.
+WezTerm is a windows app and reads its config from
+`C:\Users\<you>\.config\wezterm\wezterm.lua`, so run `install.ps1` from a
+windows-side checkout.
 
 ## New tabs and splits keep the current directory
 
-Wezterm reads a pane's cwd from `/proc/<pid>/cwd` or from OSC 7. Under WSL only
-OSC 7 works -- the terminal is a Windows app, the shell lives in the VM -- so
-without it every new tab and split lands in `$HOME`. Ubuntu ships no emitter,
-hence `bash/wsl-shell-integration.bash`.
+Wezterm reads a pane's cwd from `/proc/<pid>/cwd` or OSC 7. Under WSL only OSC
+7 works -- the terminal is a windows app, the shell lives in the VM -- and
+Ubuntu ships no emitter, so without `bash/wsl-shell-integration.bash` every new
+tab lands in `$HOME`.
 
-`install.sh` appends this when it detects WSL -- sourced by absolute path, not
-symlinked, since `~/.bashrc` keeps its distro contents:
+`install.sh` appends this on WSL, sourced by absolute path so `~/.bashrc` keeps
+its distro contents:
 
 ```sh
 cat >> ~/.bashrc <<'EOF'
@@ -122,40 +112,77 @@ fi
 EOF
 ```
 
-Not wezterm-specific: kitty, foot, ghostty, konsole, VTE and Windows Terminal
+Not wezterm-specific -- kitty, foot, ghostty, konsole, VTE and Windows Terminal
 all consume OSC 7.
 
 ## yazi leaves the shell where you exited
 
-Run `y`, not `yazi`. yazi is a child process and cannot change its parent's
-directory, so `--cwd-file` has it write the one it exited from and the wrapper
-does the cd. `q` brings that directory back, `Q` does not.
+Run `y`, not `yazi`. yazi cannot change its parent's directory, so `--cwd-file`
+has it write the one it exited from and the wrapper does the cd. `q` brings
+that directory back, `Q` does not.
 
-The shell moves, not the terminal, so this holds in any of them -- but it is
-per-shell, and one half per shell: `bash/yazi-cd.bash`, `pwsh/yazi-cd.ps1`, and
-`bin/y.cmd` for cmd, which has no functions. `install.sh` appends the source
-line on every platform, unlike the OSC 7 emitter above; `install.ps1` uses
-`$PROFILE.CurrentUserAllHosts`, whichever powershell ran it -- 7 and 5.1 keep
-separate profiles -- and the cmd half needs no wiring beyond the `bin\` it
-already puts on PATH. Shells already open keep the old definition until they
-restart.
+The shell moves, not the terminal, so this works in any of them -- but it is
+one half per shell: `bash/yazi-cd.bash`, `pwsh/yazi-cd.ps1`, and `bin/y.cmd`
+for cmd, which has no functions. `install.sh` appends the source line
+everywhere; `install.ps1` uses `$PROFILE.CurrentUserAllHosts`, since powershell
+7 and 5.1 keep separate profiles. Open shells keep the old definition until
+they restart.
 
 A batch file runs in the cmd that called it, which is what lets `y.cmd` do the
 cd; it `call`s yazi so a yazi that is itself a `.cmd` shim comes back.
 
-Under WSL the two stack: `y` moves the shell, OSC 7 reports the new directory,
-so a split opened afterwards starts there.
+Under WSL the two stack: `y` moves the shell, OSC 7 reports it, so the next
+split starts there.
 
 ## Clipboard
 
 Neovim shells out for the system clipboard, so `clipboard=unnamedplus`
-(`nvim/lua/config/_default.lua`) expects a tool to be installed:
+(`nvim/lua/config/_default.lua`) needs a tool installed:
 
-1. WSL -- `xclip`; WSLg bridges it to the Windows clipboard
+1. WSL -- `xclip`; WSLg bridges it to the windows clipboard
 2. Fedora -- `wl-clipboard` on wayland, `xclip` on X11
-3. Windows -- `scoop install win32yank`, otherwise every paste spawns powershell
+3. windows -- `scoop install win32yank`, otherwise every paste spawns powershell
 
-Neovim finds all three on its own. The exception is WSL, where `_default.lua`
-names xclip outright: autodetection scans `$PATH` for every tool it misses, and
-the `/mnt/c` entries there make that ~190ms of each startup. `:checkhealth
-vim.provider` shows which one was picked.
+Neovim finds all three on its own, except on WSL where `_default.lua` names
+xclip outright: autodetection scans `$PATH` for every tool it misses, and the
+`/mnt/c` entries make that ~190ms of each startup. `:checkhealth vim.provider`
+shows which was picked.
+
+## kdiff3 as the merge and difftool
+
+Optional, and neither installer touches it. The draw is the three-way merge --
+a middle pane carrying the base -- and `git difftool -d`, which folder-compares
+the whole tree against any ref.
+
+```sh
+git config --global merge.tool kdiff3
+git config --global diff.tool kdiff3
+git config --global mergetool.prompt false
+```
+
+Same everywhere: git ships a kdiff3 definition and finds the binary on `$PATH`.
+The binary is not. It is a GUI app, so every environment needs its own, the two
+windows checkouts included.
+
+1. WSL / Ubuntu -- `sudo apt install kdiff3`
+2. Fedora -- `sudo dnf install kdiff3`
+3. windows -- `winget install KDE.KDiff3`
+4. macos -- `brew install --cask kdiff3`
+
+Use `KDE.KDiff3`. The `JoachimEibl.KDiff3` beside it is 0.9.98, from before the
+project moved to KDE.
+
+It has to be on the side the calling git runs on. `git difftool` stages blobs
+under `/tmp/git-blob-XXXXXX`, and a windows kdiff3 or a flatpak resolves those
+in a filesystem of its own -- two empty panes. `git mergetool` keeps its
+`.BASE`, `.LOCAL` and `.REMOTE` in the repo, so it works either way. Test
+difftool first.
+
+A blank grey window under WSL is WSLg, not kdiff3. If `LIBGL_ALWAYS_SOFTWARE=1`
+is blank too, run `wsl --update` then `wsl --shutdown`. The `[WARN:COPY MODE]`
+title prefix is unrelated and stays.
+
+`lazygit/config.yml` puts `<ctrl+t>` on the commits panel for a folder diff
+against the selected commit; lazygit has that key everywhere else already.
+
+1.12.4 everywhere but Ubuntu 24.04 -- 1.10.7, and no backport. 26.04 has 1.12.4.

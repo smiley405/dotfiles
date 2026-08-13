@@ -1,0 +1,9 @@
+customCommands:
+  # lazygit binds <ctrl+t> to the diff tool everywhere but the commits panel.
+  # -d compares the whole tree; without it you get one window per file.
+  # kdiff3 writes straight to your files -- --no-symlinks to be asked first.
+  - key: '<c-t>'
+    context: 'commits'
+    description: 'Open external diff tool (git difftool) -- folder diff vs this commit'
+    command: 'setsid nohup git difftool -d --no-prompt {{.SelectedCommit.Hash}} >/dev/null 2>&1 &'
+    output: 'none'
