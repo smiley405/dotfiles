@@ -38,8 +38,8 @@ mode, a junction needs neither.
 The links are on the directories, so a new file under `nvim/` is live with no
 re-run; a new top-level tool is not, and needs a line in each installer. That
 list stays explicit because the mapping is not mechanical -- `yazi/` lands on
-`~/.config/yazi` but `%APPDATA%\yazi\config`, and `bash/` (sourced by path) and
-`bin/` (on PATH) are not linked at all.
+`~/.config/yazi` but `%APPDATA%\yazi\config`, and `bash/` and `pwsh/` (sourced
+by path) and `bin/` (on PATH) are not linked at all.
 
 A windows box used both ways needs two checkouts and both installers; neither
 side can reach the other, since a junction cannot point into the VM over
@@ -124,6 +124,22 @@ EOF
 
 Not wezterm-specific: kitty, foot, ghostty, konsole, VTE and Windows Terminal
 all consume OSC 7.
+
+## yazi leaves the shell where you exited
+
+Run `y`, not `yazi`. yazi is a child process and cannot change its parent's
+directory, so `--cwd-file` has it write the one it exited from and the wrapper
+does the cd. `q` brings that directory back, `Q` does not.
+
+The shell moves, not the terminal, so this holds in any of them -- but it is
+per-shell: `bash/yazi-cd.bash` on linux, macos and WSL, `pwsh/yazi-cd.ps1` on
+windows. `install.sh` appends the source line on every platform, unlike the OSC
+7 emitter above; `install.ps1` uses `$PROFILE.CurrentUserAllHosts`, whichever
+powershell ran it -- 7 and 5.1 keep separate profiles. Shells already open keep
+the old definition until they restart.
+
+Under WSL the two stack: `y` moves the shell, OSC 7 reports the new directory,
+so a split opened afterwards starts there.
 
 ## Clipboard
 

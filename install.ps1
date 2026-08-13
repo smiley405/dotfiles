@@ -86,6 +86,31 @@ function Set-UserEnv {
 	Info "env     $Name = $Value (restart wezterm to pick it up)"
 }
 
+function Add-ProfileSource {
+	param([string]$File, [string]$Why)
+
+	# CurrentUserAllHosts: the console, the VS Code terminal and the ISE all read it
+	$profilePath = $PROFILE.CurrentUserAllHosts
+	if (-not $profilePath) {
+		Info "MISSING no profile path -- skipped $(Split-Path -Leaf $File)"
+		return
+	}
+
+	if ((Test-Path -LiteralPath $profilePath) -and
+			(Select-String -LiteralPath $profilePath -SimpleMatch -Pattern $File -Quiet)) {
+		Info "ok      profile already sources $(Split-Path -Leaf $File)"
+		return
+	}
+
+	$parent = Split-Path -Parent -Path $profilePath
+	if ($parent -and -not (Test-Path -LiteralPath $parent)) {
+		New-Item -ItemType Directory -Path $parent -Force | Out-Null
+	}
+
+	Add-Content -LiteralPath $profilePath -Value @('', "# dotfiles: $Why", ". `"$File`"")
+	Info "append  $profilePath now sources $(Split-Path -Leaf $File)"
+}
+
 function Find-File1 {
 	# git for windows keeps one in usr\bin, off PATH, under either root
 	$roots = @($env:ProgramFiles, ${env:ProgramFiles(x86)}) | Where-Object { $_ }
@@ -107,6 +132,11 @@ Set-Junction -Target (Join-Path $repo 'wezterm') -Link (Join-Path $env:USERPROFI
 # yazi calls `yazi-wez` by bare name, which needs bin\yazi-wez.cmd on PATH
 Write-Host 'dotfiles: PATH'
 Add-UserPath -Dir $bin
+
+# the windows half of the ~/.bashrc append in install.sh
+Write-Host 'dotfiles: shell integration'
+Add-ProfileSource -File (Join-Path $repo 'pwsh\yazi-cd.ps1') `
+	-Why 'y -- yazi, leaving the shell where you exited'
 
 # yazi types files with file(1); without one, `start` claims every file
 Write-Host 'dotfiles: file(1)'

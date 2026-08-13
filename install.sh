@@ -15,6 +15,24 @@ is_wsl() { [ -n "${WSL_DISTRO_NAME:-}" ] || grep -qi microsoft /proc/version 2>/
 
 info() { printf '  %s\n' "$*"; }
 
+# sourced by path, not symlinked: ~/.bashrc keeps its distro contents
+bashrc_source() {
+	local file=$1 why=$2
+
+	if grep -qF "$file" "$HOME/.bashrc" 2>/dev/null; then
+		info "ok      ~/.bashrc already sources $file"
+		return
+	fi
+
+	{
+		printf '\n# dotfiles: %s\n' "$why"
+		printf 'if [ -f "%s/bash/%s" ]; then\n' "$repo" "$file"
+		printf '\t. "%s/bash/%s"\n' "$repo" "$file"
+		printf 'fi\n'
+	} >> "$HOME/.bashrc"
+	info "append  ~/.bashrc now sources $file"
+}
+
 link() {
 	local src=$1 dst=$2 backup
 
@@ -49,21 +67,15 @@ else
 	link "$repo/wezterm" "$config/wezterm"
 fi
 
+printf 'dotfiles: shell integration\n'
+
+# every platform, unlike the OSC 7 block below
+bashrc_source yazi-cd.bash 'y() -- yazi, leaving the shell where you exited'
+
 # OSC 7 cwd reporting: under WSL the terminal is a windows app and the shell is
 # in the VM, so /proc is out of reach and only the escape sequence gets through.
 if is_wsl; then
-	printf 'dotfiles: shell integration\n'
-	if grep -qF 'wsl-shell-integration.bash' "$HOME/.bashrc" 2>/dev/null; then
-		info "ok      ~/.bashrc already sources wsl-shell-integration.bash"
-	else
-		{
-			printf '\n# dotfiles: OSC 7 cwd reporting (wezterm tab/split inherits cwd under WSL)\n'
-			printf 'if [ -f "%s/bash/wsl-shell-integration.bash" ]; then\n' "$repo"
-			printf '\t. "%s/bash/wsl-shell-integration.bash"\n' "$repo"
-			printf 'fi\n'
-		} >> "$HOME/.bashrc"
-		info "append  ~/.bashrc now sources wsl-shell-integration.bash"
-	fi
+	bashrc_source wsl-shell-integration.bash 'OSC 7 cwd reporting (wezterm tab/split inherits cwd under WSL)'
 fi
 
 printf 'dotfiles: dependencies\n'
