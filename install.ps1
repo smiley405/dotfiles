@@ -138,6 +138,14 @@ Write-Host 'dotfiles: shell integration'
 Add-ProfileSource -File (Join-Path $repo 'pwsh\yazi-cd.ps1') `
 	-Why 'y -- yazi, leaving the shell where you exited'
 
+# cmd has no functions, so it gets a batch file instead -- already live from the
+# PATH entry above, nothing to wire
+if (Test-Path -LiteralPath (Join-Path $bin 'y.cmd')) {
+	Info "ok      cmd uses bin\y.cmd"
+} else {
+	Info "MISSING bin\y.cmd"
+}
+
 # yazi types files with file(1); without one, `start` claims every file
 Write-Host 'dotfiles: file(1)'
 if (Get-Command 'file' -ErrorAction SilentlyContinue) {
