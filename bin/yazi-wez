@@ -2,9 +2,10 @@
 #
 # yazi <-> neovim over wezterm panes.
 #
-#   pick <nvim-server> <nvim-pane-id> [start-path]
+#   pick <nvim-server> <nvim-pane-id|-> [start-path]
 #       Run yazi in a split spawned by nvim/lua/config/yazi.lua. <Enter> hands
 #       the selection to that nvim, refocuses it, and exits (closing the split).
+#       `-` for the pane id: run by hand outside wezterm, nothing to refocus.
 #
 #   edit [--tab|--new] <path>...
 #       Bound in yazi/keymap.toml: open paths in nvim -- the one we came from
@@ -52,14 +53,15 @@ shell_command() {
 
 cmd_pick() {
 	local server=${1:-} pane=${2:-} start=${3:-}
-	[ -n "$server" ] && [ -n "$pane" ] || die 'usage: yazi-wez pick <nvim-server> <nvim-pane-id> [start-path]'
+	[ -n "$server" ] && [ -n "$pane" ] || die 'usage: yazi-wez pick <nvim-server> <nvim-pane-id|-> [start-path]'
 
 	# not `local`: the EXIT trap fires after this returns, out of a local's scope
 	chooser=$(mktemp -t yazi-wez.XXXXXXXX)
 	trap 'rm -f "$chooser"' EXIT
 
 	# let a nested `edit` reach the nvim that spawned us
-	export YAZI_WEZ_NVIM=$server YAZI_WEZ_PANE=$pane
+	export YAZI_WEZ_NVIM=$server
+	if [ "$pane" != '-' ]; then export YAZI_WEZ_PANE=$pane; fi
 
 	if [ -n "$start" ] && [ -e "$start" ]; then
 		yazi --chooser-file="$chooser" "$start"
@@ -81,7 +83,9 @@ cmd_pick() {
 		fi
 	fi
 
-	wez activate-pane --pane-id "$pane" >/dev/null
+	if [ "$pane" != '-' ]; then
+		wez activate-pane --pane-id "$pane" >/dev/null
+	fi
 }
 
 cmd_edit() {

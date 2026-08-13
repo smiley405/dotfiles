@@ -3,6 +3,9 @@
 -- :terminal float) keeps image previews and yazi's own keys intact.
 -- Reverse direction: yazi/keymap.toml, same script.
 --
+-- Elsewhere there is no pane to split, so the keys copy `yazi-wez pick <server>
+-- - <path>` and notify it. Pasted in any shell it still reaches this nvim.
+--
 -- The mux spawns a pane's program without a shell, so the script has two halves:
 -- bin/yazi-wez under bash, bin/yazi-wez.ps1 under powershell. WSL nvim is a
 -- linux process, so it takes the unix one.
@@ -11,6 +14,9 @@
 local repo = vim.fn.fnamemodify(vim.fn.resolve(vim.fn.stdpath('config')), ':h')
 local is_win = vim.fn.has('win32') == 1
 local script = repo .. (is_win and '/bin/yazi-wez.ps1' or '/bin/yazi-wez')
+
+-- Set in every pane and forwarded into the WSL ones, unlike WEZTERM_PANE.
+local in_wezterm = vim.env.TERM_PROGRAM == 'WezTerm'
 
 -- Resolved on first use, not at startup: executable() walks every $PATH entry,
 -- and the /mnt/c ones under WSL made this ~88ms of every launch.
@@ -113,17 +119,33 @@ local function pane_program(args)
 	return { 'bash', '-lc', run }
 end
 
-local function open(start)
-	local pane = nvim_pane()
-	if not pane then
-		vim.notify('yazi: no wezterm pane found (is nvim running under wezterm?)',
-			vim.log.levels.WARN)
-		return
-	end
+-- Double quotes: the only kind cmd takes, and bash and pwsh take them too.
+local function quote(s)
+	if s:match('^[%w%._/\\:%-]+$') then return s end
+	return '"' .. (s:gsub('"', '\\"')) .. '"'
+end
 
+-- No pane to split: hand the command over. `-` means nothing to refocus.
+local function copy_command(server, start)
+	local cmd = 'yazi-wez pick ' .. quote(server) .. ' -'
+	if start and start ~= '' then cmd = cmd .. ' ' .. quote(start) end
+
+	-- nvim finds win32yank/xclip/wl-copy itself, or OSC 52 over ssh
+	vim.fn.setreg('+', cmd)
+	vim.notify(cmd, vim.log.levels.INFO,
+		{ title = 'yazi: copied, paste in a terminal' })
+end
+
+local function open(start)
 	-- nvim always listens, but --remote needs the address spelled out
 	local server = vim.v.servername
 	if server == '' then server = vim.fn.serverstart() end
+
+	if not in_wezterm then return copy_command(server, start) end
+
+	-- mux unreachable: the paste still works
+	local pane = nvim_pane()
+	if not pane then return copy_command(server, start) end
 
 	local args = { 'pick', server, tostring(pane) }
 	if start and start ~= '' then args[#args + 1] = start end

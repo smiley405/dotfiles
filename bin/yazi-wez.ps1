@@ -60,14 +60,14 @@ function Invoke-Pick {
 	param([string]$Server, [string]$Pane, [string]$Start)
 
 	if (-not $Server -or -not $Pane) {
-		Die 'usage: yazi-wez pick <nvim-server> <nvim-pane-id> [start-path]'
+		Die 'usage: yazi-wez pick <nvim-server> <nvim-pane-id|-> [start-path]'
 	}
 
 	$chooser = [System.IO.Path]::GetTempFileName()
 
 	# let a nested `edit` reach the nvim that spawned us
 	$env:YAZI_WEZ_NVIM = $Server
-	$env:YAZI_WEZ_PANE = $Pane
+	$env:YAZI_WEZ_PANE = if ($Pane -eq '-') { $null } else { $Pane }
 
 	try {
 		if ($Start -and (Test-Path -LiteralPath $Start)) {
@@ -86,7 +86,7 @@ function Invoke-Pick {
 		}
 	} finally {
 		Remove-Item -LiteralPath $chooser -Force -ErrorAction SilentlyContinue
-		& $Wezterm cli activate-pane --pane-id $Pane | Out-Null
+		if ($Pane -ne '-') { & $Wezterm cli activate-pane --pane-id $Pane | Out-Null }
 	}
 }
 

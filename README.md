@@ -52,6 +52,11 @@ file back and closes the split. In yazi, `<C-o>` / `<C-t>` open the selection in
 neovim as a split or a new tab. Both go through `wezterm cli`, so yazi runs in a
 real pane and keeps its own keys and image previews.
 
+Outside wezterm -- the test is `TERM_PROGRAM` -- there is no pane to split, so
+the keys copy `yazi-wez pick <server> - <path>` and show it in a notification.
+Pasted into any shell it starts yazi at the same path and still talking to that
+neovim; `-` for the pane id only means nothing is refocused when yazi exits.
+
 The mux spawns a pane's program without a shell, so the helper has one half per
 platform:
 
