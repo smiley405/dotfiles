@@ -104,6 +104,35 @@ end
 
 -- Pinky + thumb, and pressed more than anything else here, so it cannot be a
 -- two-modifier claw. nvim gives up <C-Space> for it -- see config/cmp.lua.
+-- A split or tab inherits the pane's domain, never what is actually running in
+-- it: `cmd.exe` typed at a WSL prompt still splits into bash, and `wsl` typed at
+-- a cmd prompt still splits into cmd. wezterm cannot see inside the VM -- every
+-- WSL pane reports wslhost.exe -- but that is the whole trick, since a windows
+-- program running there reports its own name instead.
+local function parent_domain(pane)
+	local proc = (pane:get_foreground_process_name() or ''):lower()
+	local base = proc:match('[^\\/]+$') or ''
+	if base == 'wslhost.exe' or base == 'wsl.exe' then
+		return { DomainName = 'WSL:Ubuntu' }
+	end
+	return { DomainName = 'local' }
+end
+
+local function split_like_parent(direction)
+	return wezterm.action_callback(function(window, pane)
+		window:perform_action(act.SplitPane {
+			direction = direction,
+			command = { domain = parent_domain(pane) },
+		}, pane)
+	end)
+end
+
+local function tab_like_parent()
+	return wezterm.action_callback(function(window, pane)
+		window:perform_action(act.SpawnTab(parent_domain(pane)), pane)
+	end)
+end
+
 config.leader = { key = 'Space', mods = 'CTRL', timeout_milliseconds = 1000 }
 
 
@@ -205,5 +234,20 @@ config.keys = {
 }
 
 -- and finally, return the configuration to wezterm
+-- Splits and tabs follow the program in the pane rather than the pane's domain.
+-- Windows only: elsewhere there is just the one domain, so it would be a no-op.
+if wezterm.target_triple:find('windows') then
+	local dirs = { s = 'Down', v = 'Right', H = 'Left', J = 'Down', K = 'Up', L = 'Right' }
+	for _, k in ipairs(config.keys) do
+		if k.mods == 'LEADER' then
+			if dirs[k.key] then
+				k.action = split_like_parent(dirs[k.key])
+			elseif k.key == 't' then
+				k.action = tab_like_parent()
+			end
+		end
+	end
+end
+
 return config
 
