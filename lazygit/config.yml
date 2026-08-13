@@ -1,9 +1,16 @@
 customCommands:
-  # lazygit binds <ctrl+t> to the diff tool everywhere but the commits panel.
-  # -d compares the whole tree; without it you get one window per file.
-  # kdiff3 writes straight to your files -- --no-symlinks to be asked first.
+  # lazygit has <ctrl+t> everywhere but here. -d compares the whole tree,
+  # and kdiff3 writes straight to your files -- --no-symlinks to be asked.
   - key: '<c-t>'
     context: 'commits'
-    description: 'Open external diff tool (git difftool) -- folder diff vs this commit'
-    command: 'setsid nohup git difftool -d --no-prompt {{.SelectedCommit.Hash}} >/dev/null 2>&1 &'
-    output: 'none'
+    description: 'kdiff3 folder diff vs this commit'
+    command: 'command -v kdiff3 >/dev/null && { setsid nohup git difftool -d --no-prompt {{.SelectedCommit.Hash}} >/dev/null 2>&1 & } || echo "kdiff3 is not installed"'
+    output: 'log'
+
+  # The shifted twin of <ctrl+t>: one file there, everything here.
+  # Untracked files are missing -- git diff does not see them.
+  - key: 'T'
+    context: 'files'
+    description: 'kdiff3 folder diff of all current changes'
+    command: 'command -v kdiff3 >/dev/null && { setsid nohup git difftool -d --no-prompt HEAD >/dev/null 2>&1 & } || echo "kdiff3 is not installed"'
+    output: 'log'
