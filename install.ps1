@@ -158,6 +158,19 @@ if (Get-Command 'file' -ErrorAction SilentlyContinue) {
 	}
 }
 
+Write-Host 'dotfiles: git'
+
+# not a junction: git reads the settings through an include in ~/.gitconfig.
+# forward slashes, so the path needs no escaping once git writes it out
+$kdiff3Conf = ($repo -replace '\\', '/') + '/git/kdiff3.gitconfig'
+$includes = @(git config --global --get-all include.path 2>$null)
+if ($includes -contains $kdiff3Conf) {
+	Info "ok      git includes kdiff3.gitconfig"
+} else {
+	git config --global --add include.path $kdiff3Conf
+	Info "config  git now includes kdiff3.gitconfig"
+}
+
 Write-Host 'dotfiles: dependencies'
 foreach ($tool in 'nvim', 'yazi', 'lazygit', 'rg', 'fd', 'jq', 'wezterm', 'pwsh') {
 	if (Get-Command $tool -ErrorAction SilentlyContinue) {

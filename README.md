@@ -150,19 +150,21 @@ shows which was picked.
 
 ## kdiff3 as the merge and difftool
 
-Optional, and neither installer touches it. The draw is the three-way merge --
-a middle pane carrying the base -- and `git difftool -d`, which folder-compares
-the whole tree against any ref.
+Optional. The draw is the three-way merge -- a middle pane carrying the base
+-- and `git difftool -d`, which folder-compares the whole tree against any ref.
 
-```sh
-git config --global merge.tool kdiff3
-git config --global diff.tool kdiff3
-git config --global mergetool.prompt false
+The settings live in `git/kdiff3.gitconfig`. It is not a link: both installers
+add an include to `~/.gitconfig` instead, so one edit here reaches every box.
+
+```ini
+[include]
+	path = <repo>/git/kdiff3.gitconfig
 ```
 
-Same everywhere: git ships a kdiff3 definition and finds the binary on `$PATH`.
-The binary is not. It is a GUI app, so every environment needs its own, the two
-windows checkouts included.
+`git config --global --list` will not show them without `--includes`; they are
+active all the same. git ships a kdiff3 definition and finds the binary on
+`$PATH`. The binary is not shared -- it is a GUI app, so every environment
+needs its own, the two windows checkouts included.
 
 1. WSL / Ubuntu -- `sudo apt install kdiff3`
 2. Fedora -- `sudo dnf install kdiff3`

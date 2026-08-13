@@ -89,6 +89,18 @@ if is_wsl; then
 	bashrc_source wsl-shell-integration.bash 'OSC 7 cwd reporting (wezterm tab/split inherits cwd under WSL)'
 fi
 
+printf 'dotfiles: git\n'
+
+# not a link: git reads the settings through an include in ~/.gitconfig.
+# --add, since a plain set would replace an include that is already there
+kdiff3_conf=$repo/git/kdiff3.gitconfig
+if git config --global --get-all include.path 2>/dev/null | grep -qxF "$kdiff3_conf"; then
+	info "ok      git includes kdiff3.gitconfig"
+else
+	git config --global --add include.path "$kdiff3_conf"
+	info "config  git now includes kdiff3.gitconfig"
+fi
+
 printf 'dotfiles: dependencies\n'
 for tool in nvim yazi lazygit rg fd jq wezterm; do
 	if command -v "$tool" >/dev/null 2>&1; then
