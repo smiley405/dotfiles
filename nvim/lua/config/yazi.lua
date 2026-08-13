@@ -133,14 +133,13 @@ local function copy_command(server, start)
 	-- nvim finds win32yank/xclip/wl-copy itself, or OSC 52 over ssh
 	vim.fn.setreg('+', cmd)
 
-	-- past the 2500 default: this one is read, not just noticed
 	vim.notify(table.concat({
 		'No wezterm pane to split -- copied instead:',
 		'',
 		'  ' .. cmd,
 		'',
 		'Paste it in any terminal. <Enter> in yazi sends the file back here.',
-	}, '\n'), vim.log.levels.INFO, { title = 'yazi', timeout = 7000 })
+	}, '\n'), vim.log.levels.INFO, { title = 'yazi' })
 end
 
 local function open(start)
