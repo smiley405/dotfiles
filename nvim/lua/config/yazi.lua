@@ -58,6 +58,34 @@ local function nvim_pane()
 	return pane_id
 end
 
+-- split-pane always lands in the target pane's domain -- it takes no --domain --
+-- so a windows nvim sitting in a WSL pane would try to run powershell inside the
+-- VM, and the split would die on the spot. wezterm reports no domain over the
+-- cli, but a WSL pane's cwd is a posix path where a windows one has a drive.
+local pane_native
+
+local function pane_is_native(pane)
+	if pane_native ~= nil then return pane_native end
+	pane_native = true
+
+	local res = vim.system({ wezterm_cmd(), 'cli', 'list', '--format', 'json' },
+		{ text = true }):wait()
+	if res.code ~= 0 then return pane_native end
+
+	local ok, panes = pcall(vim.json.decode, (res.stdout:gsub('\r', '')))
+	if not ok or type(panes) ~= 'table' then return pane_native end
+
+	for _, p in ipairs(panes) do
+		if p.pane_id == pane and type(p.cwd) == 'string' and p.cwd ~= '' then
+			-- file:///C:/... or file://host/C:/... both leave /C: once the
+			-- scheme and authority are gone; a linux cwd leaves /home/...
+			pane_native = p.cwd:gsub('^file://[^/]*', ''):match('^/%a:') ~= nil
+			break
+		end
+	end
+	return pane_native
+end
+
 -- Windows panes inherit the mux's environment, so they skip the PATH dance.
 local function pane_program(args)
 	if is_win then
@@ -78,6 +106,13 @@ local function open(start)
 	local pane = nvim_pane()
 	if not pane then
 		vim.notify('yazi: no wezterm pane found (is nvim running under wezterm?)',
+			vim.log.levels.WARN)
+		return
+	end
+
+	if is_win and not pane_is_native(pane) then
+		vim.notify('yazi: this is a WSL pane, so the split cannot run the windows '
+			.. 'helper. Open a windows pane with LEADER T, or use the WSL nvim here.',
 			vim.log.levels.WARN)
 		return
 	end
