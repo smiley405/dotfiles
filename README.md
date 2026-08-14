@@ -225,6 +225,26 @@ adjustment the wezterm chrome makes.
 lazygit's `nerdFontsVersion` was empty, which means it drew no file icons at
 all; it is `'3'` now, matching the glyph range the rest of these configs use.
 
+## Git: one tool per scope
+
+Split by what is being operated on, not by preference.
+
+- **The hunk under the cursor** -- gitsigns, the only git plugin here.
+  `<leader>vh` previews, `<leader>gb` blames, `]c`/`[c` move.
+- **The repo as state** -- lazygit. `<leader>gg` opens it, `<leader>gh` the
+  history of this file, `<leader>gs` the stashes.
+- **Conflicts and whole trees** -- meld. `<leader>gm` runs `git mergetool`,
+  and lazygit's `<c-t>`/`T` folder-diff through `bin/git-treediff`.
+
+nvim opens lazygit in a terminal tab and reloads buffers on exit, since a
+checkout underneath leaves them stale. `config/menu.lua` calls the same
+`:LazyGit*` and `:GitMergeTool` commands, so the menu cannot drift from the keys.
+
+diffview.nvim sat across all three and was dropped: it showed what lazygit
+already shows and resolved conflicts meld handles better. One answer per
+question -- which also took `<leader>gd` and line history. Not for startup,
+which measured the same either way.
+
 ## meld as the merge and difftool
 
 Optional. The draw is the three-way merge -- a middle pane carrying the base
