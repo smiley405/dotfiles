@@ -7,6 +7,11 @@ External dependencies:
 2. [fd](https://github.com/BurntSushi/ripgrep)
 3. [yazi](https://github.com/sxyazi/yazi) + jq -- for the file manager keymaps
 4. `file` -- yazi's mime typing; on windows it comes from git for windows
+5. [lazygit](https://github.com/jesseduffield/lazygit) -- `<leader>g` opens it;
+   nvim has no git plugin beyond gitsigns
+6. [meld](https://meldmerge.org) -- optional. Without it `<leader>gm` and
+   lazygit's `<c-t>`/`T` folder diffs say so and do nothing; everything else
+   is unaffected
 
 Terminal Using:
 1. [wezterm](https://github.com/wez/wezterm)

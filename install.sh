@@ -112,11 +112,13 @@ else
 fi
 
 printf 'dotfiles: dependencies\n'
-for tool in nvim yazi lazygit rg fd jq wezterm; do
+for tool in nvim yazi lazygit rg fd jq wezterm meld; do
 	if command -v "$tool" >/dev/null 2>&1; then
 		info "ok      $tool"
 	elif [ "$tool" = wezterm ] && command -v wezterm.exe >/dev/null 2>&1; then
 		info "ok      wezterm (wezterm.exe via WSL interop)"
+	elif [ "$tool" = meld ]; then
+		info "note    meld not found -- optional, but folder diffs and merges need it"
 	else
 		info "MISSING $tool"
 	fi

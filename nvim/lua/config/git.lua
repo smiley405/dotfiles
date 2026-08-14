@@ -86,7 +86,8 @@ command('LazyGitFile', in_tab(function()
 	return { 'lazygit', '--filter', file }
 end, no_lazygit), { desc = 'lazygit: history of this file' })
 
--- guarded: mergetool on a clean index says nothing and exits
+-- guarded: a clean index says nothing, a missing tool is a raw git error.
+-- Asks git which tool, so this holds if merge.tool changes.
 command('GitMergeTool', in_tab(function()
 	-- U = unmerged: the paths git wants resolved
 	local conflicts = vim.fn.systemlist({ 'git', 'diff', '--name-only', '--diff-filter=U' })
@@ -95,6 +96,12 @@ command('GitMergeTool', in_tab(function()
 		return nil
 	elseif #conflicts == 0 then
 		vim.notify('No merge conflicts', vim.log.levels.INFO)
+		return nil
+	end
+
+	local tool = vim.fn.systemlist({ 'git', 'config', '--get', 'merge.tool' })[1]
+	if tool and tool ~= '' and vim.fn.executable(tool) == 0 then
+		vim.notify(tool .. ' is not installed', vim.log.levels.WARN)
 		return nil
 	end
 	return { 'git', 'mergetool' }
