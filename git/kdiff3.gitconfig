@@ -1,6 +1,0 @@
-[merge]
-	tool = kdiff3
-[diff]
-	tool = kdiff3
-[mergetool]
-	prompt = false

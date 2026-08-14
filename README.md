@@ -220,41 +220,47 @@ adjustment the wezterm chrome makes.
 lazygit's `nerdFontsVersion` was empty, which means it drew no file icons at
 all; it is `'3'` now, matching the glyph range the rest of these configs use.
 
-## kdiff3 as the merge and difftool
+## meld as the merge and difftool
 
 Optional. The draw is the three-way merge -- a middle pane carrying the base
--- and `git difftool -d`, which folder-compares the whole tree against any ref.
+-- and folder-comparing the whole tree against any ref. It replaced kdiff3,
+which did the same job but was the one light window left on a dark desktop and
+needed a KDE colour scheme to fix, more machinery than the tool was worth.
 
-The settings live in `git/kdiff3.gitconfig`. It is not a link: both installers
+The settings live in `git/meld.gitconfig`. It is not a link: both installers
 add an include to `~/.gitconfig` instead, so one edit here reaches every box.
 
 ```ini
 [include]
-	path = <repo>/git/kdiff3.gitconfig
+	path = <repo>/git/meld.gitconfig
 ```
 
 `git config --global --list` will not show them without `--includes`; they are
-active all the same. git ships a kdiff3 definition and finds the binary on
+active all the same. git ships a meld definition and finds the binary on
 `$PATH`. The binary is not shared -- it is a GUI app, so every environment
 needs its own, the two windows checkouts included.
 
-1. WSL / Ubuntu -- `sudo apt install kdiff3`
-2. Fedora -- `sudo dnf install kdiff3`
-3. windows -- `winget install KDE.KDiff3`
-4. macos -- `brew install --cask kdiff3`
+1. WSL / Ubuntu -- `sudo apt install meld`
+2. Fedora -- `sudo dnf install meld`
+3. windows -- `winget install Meld`
+4. macos -- `brew install --cask meld`
 
-Use `KDE.KDiff3`. The `JoachimEibl.KDiff3` beside it is 0.9.98, from before the
-project moved to KDE.
+`mergetool.meld.useAutoMerge` is on, so meld settles the hunks that do not
+actually conflict and the panes hold the decisions left to make. git's own
+default hands you the whole file.
 
 It has to be on the side the calling git runs on. `git difftool` stages blobs
-under `/tmp/git-blob-XXXXXX`, and a windows kdiff3 or a flatpak resolves those
-in a filesystem of its own -- two empty panes. `git mergetool` keeps its
-`.BASE`, `.LOCAL` and `.REMOTE` in the repo, so it works either way. Test
-difftool first.
+under `/tmp/git-blob-XXXXXX`, and a windows meld or a flatpak resolves those in
+a filesystem of its own -- two empty panes. `git mergetool` keeps its `.BASE`,
+`.LOCAL` and `.REMOTE` in the repo, so it works either way. Test difftool
+first.
 
-A blank grey window under WSL is WSLg, not kdiff3. If `LIBGL_ALWAYS_SOFTWARE=1`
-is blank too, run `wsl --update` then `wsl --shutdown`. The `[WARN:COPY MODE]`
-title prefix is unrelated and stays.
+A blank grey window under WSL is WSLg, not the tool. If
+`LIBGL_ALWAYS_SOFTWARE=1` is blank too, run `wsl --update` then
+`wsl --shutdown`.
+
+Nothing themes it here. meld is GTK, so it follows the desktop theme already,
+which is the whole reason it is a better fit than what it replaced.
 
 `lazygit/config.yml` puts `<ctrl+t>` on the commits panel for a folder diff
 against the selected commit, and `T` in the files panel for the working tree
@@ -263,8 +269,9 @@ against `HEAD`; lazygit has `<ctrl+t>` everywhere else already.
 Both run `bin/git-treediff`, not `git difftool -d`, which copies only the
 changed files into its temp dirs. The script extracts the whole commit with
 `git archive` and diffs it against the working tree, so every folder is there.
-The right pane is live -- saving in kdiff3 writes to your files -- and
-untracked files sit on that side alone. Needs `~/.local/bin` on `$PATH` and a
-POSIX shell, so run lazygit inside WSL on a windows box.
+The right pane is live -- saving in meld writes to your files -- and untracked
+files sit on that side alone. `-a` compares the differing files up front
+instead of on each click, and the panes are labelled with the ref rather than
+both reading as a temp path. Needs `~/.local/bin` on `$PATH` and a POSIX
+shell, so run lazygit inside WSL on a windows box.
 
-1.12.4 everywhere but Ubuntu 24.04 -- 1.10.7, and no backport. 26.04 has 1.12.4.

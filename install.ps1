@@ -162,13 +162,23 @@ Write-Host 'dotfiles: git'
 
 # not a junction: git reads the settings through an include in ~/.gitconfig.
 # forward slashes, so the path needs no escaping once git writes it out
-$kdiff3Conf = ($repo -replace '\\', '/') + '/git/kdiff3.gitconfig'
+$difftoolConf = ($repo -replace '\\', '/') + '/git/meld.gitconfig'
+$oldConf = ($repo -replace '\\', '/') + '/git/kdiff3.gitconfig'
 $includes = @(git config --global --get-all include.path 2>$null)
-if ($includes -contains $kdiff3Conf) {
-	Info "ok      git includes kdiff3.gitconfig"
+
+# this used to be kdiff3.gitconfig; drop that include or both would apply and
+# the later one would decide the tool. --fixed-value keeps the dots in the
+# path from being read as a pattern, and takes only that one entry.
+if ($includes -contains $oldConf) {
+	git config --global --unset-all --fixed-value include.path $oldConf
+	Info "config  dropped the old kdiff3.gitconfig include"
+}
+
+if ($includes -contains $difftoolConf) {
+	Info "ok      git includes meld.gitconfig"
 } else {
-	git config --global --add include.path $kdiff3Conf
-	Info "config  git now includes kdiff3.gitconfig"
+	git config --global --add include.path $difftoolConf
+	Info "config  git now includes meld.gitconfig"
 }
 
 Write-Host 'dotfiles: dependencies'

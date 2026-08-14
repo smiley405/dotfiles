@@ -23,13 +23,13 @@ customCommands:
   # repo side by side, not just the changed files.
   - key: '<c-t>'
     context: 'commits'
-    description: 'kdiff3 folder diff vs this commit'
-    command: 'command -v kdiff3 >/dev/null || { echo "kdiff3 is not installed"; exit 1; }; command -v git-treediff >/dev/null || { echo "git-treediff is not on PATH -- rerun install.sh"; exit 1; }; setsid nohup git-treediff {{.SelectedCommit.Hash}} >/dev/null 2>&1 &'
+    description: 'meld folder diff vs this commit'
+    command: 'command -v meld >/dev/null || { echo "meld is not installed"; exit 1; }; command -v git-treediff >/dev/null || { echo "git-treediff is not on PATH -- rerun install.sh"; exit 1; }; setsid nohup git-treediff {{.SelectedCommit.Hash}} >/dev/null 2>&1 &'
     output: 'log'
 
   # the shifted twin of <ctrl+t>: one file there, everything here
   - key: 'T'
     context: 'files'
-    description: 'kdiff3 folder diff of all current changes'
-    command: 'command -v kdiff3 >/dev/null || { echo "kdiff3 is not installed"; exit 1; }; command -v git-treediff >/dev/null || { echo "git-treediff is not on PATH -- rerun install.sh"; exit 1; }; setsid nohup git-treediff HEAD >/dev/null 2>&1 &'
+    description: 'meld folder diff of all current changes'
+    command: 'command -v meld >/dev/null || { echo "meld is not installed"; exit 1; }; command -v git-treediff >/dev/null || { echo "git-treediff is not on PATH -- rerun install.sh"; exit 1; }; setsid nohup git-treediff HEAD >/dev/null 2>&1 &'
     output: 'log'

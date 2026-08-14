@@ -93,12 +93,22 @@ printf 'dotfiles: git\n'
 
 # not a link: git reads the settings through an include in ~/.gitconfig.
 # --add, since a plain set would replace an include that is already there
-kdiff3_conf=$repo/git/kdiff3.gitconfig
-if git config --global --get-all include.path 2>/dev/null | grep -qxF "$kdiff3_conf"; then
-	info "ok      git includes kdiff3.gitconfig"
+difftool_conf=$repo/git/meld.gitconfig
+
+# this used to be kdiff3.gitconfig; drop that include or both would apply and
+# the later one would decide the tool. --fixed-value so the dots in the path
+# are not read as a pattern, and only that one entry goes.
+old_conf=$repo/git/kdiff3.gitconfig
+if git config --global --get-all include.path 2>/dev/null | grep -qxF "$old_conf"; then
+	git config --global --unset-all --fixed-value include.path "$old_conf"
+	info "config  dropped the old kdiff3.gitconfig include"
+fi
+
+if git config --global --get-all include.path 2>/dev/null | grep -qxF "$difftool_conf"; then
+	info "ok      git includes meld.gitconfig"
 else
-	git config --global --add include.path "$kdiff3_conf"
-	info "config  git now includes kdiff3.gitconfig"
+	git config --global --add include.path "$difftool_conf"
+	info "config  git now includes meld.gitconfig"
 fi
 
 printf 'dotfiles: dependencies\n'
