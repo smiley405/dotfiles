@@ -27,8 +27,13 @@ fi
 ref=${1:-HEAD}
 git rev-parse --verify --quiet "$ref^{commit}" >/dev/null || die "not a commit: $ref"
 
+# meld is single-instance: with one already open, a second invocation hands
+# the paths over and exits, so this cannot know when the window closes.
+# Deleting on exit pulled the extract out from under it; sweep old runs.
+find /tmp -maxdepth 1 -name 'git-treediff.*' -type d -mtime +0 \
+	-exec rm -rf -- {} + 2>/dev/null || true
+
 tmp=$(mktemp -d -t git-treediff.XXXXXXXX)
-trap 'rm -rf -- "$tmp"' EXIT
 
 # the rev names the leaf dir, so labels read as the ref and not XXXXXX
 extract() {
@@ -59,5 +64,6 @@ else
 	right_label='working tree'
 fi
 
-# no -a: it opens a tab per differing file, which buries the tree view
+# No -a: it opens a tab per differing file, which is unusable on a large
+# change. Opening a file from the tree adds a tab, it does not replace it.
 meld -L "$left_label" -L "$right_label" -- "$left" "$right"
