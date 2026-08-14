@@ -1,7 +1,7 @@
 vim.cmd([[
 	let g:hardtime_default_on = 1
 	let g:hardtime_ignore_quickfix = 1
-	let g:hardtime_ignore_buffer_patterns = [ "diffview", "diffpanel", "undotree" ]
+	let g:hardtime_ignore_buffer_patterns = [ "undotree" ]
 	let g:hardtime_motion_with_count_resets = 1
 	let g:hardtime_maxcount = 2
 

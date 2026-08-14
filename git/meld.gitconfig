@@ -4,8 +4,8 @@
 	tool = meld
 [mergetool]
 	prompt = false
+	# no <file>.orig after every resolve; the merge is in the index already
+	keepBackup = false
 [mergetool "meld"]
-	# Let meld settle the hunks that do not actually conflict, so the panes
-	# hold the decisions you have to make and not much else. git's own
-	# default hands you the whole file.
+	# settle the hunks that do not really conflict, leaving only the decisions
 	useAutoMerge = true

@@ -14,13 +14,12 @@ vim.cmd([[
 	"View"
 	menu View.Toggle\ Colorizer :silent! ColorizerToggle<CR>
 	"Git"
-	menu Git.Diff:\ Working\ Tree :DiffviewOpen<CR>
-	menu Git.Repository:\ Commits\ History :DiffviewFileHistory<CR>
-	menu Git.File:\ Commits\ History :DiffviewFileHistory %<CR>
-	menu Git.Line:\ Commits\ History :.DiffviewFileHistory %<CR>
-	menu Git.Git\ Stash\ List :DiffviewFileHistory -g --range=stash<CR>
+	menu Git.Diff:\ Working\ Tree :LazyGit<CR>
+	menu Git.Repository:\ Commits\ History :LazyGitLog<CR>
+	menu Git.File:\ Commits\ History :LazyGitFile<CR>
+	menu Git.Git\ Stash\ List :LazyGitStash<CR>
 	menu Git.Git\ Blame :lua require('gitsigns').blame()<CR>
-	menu Git.Git\ Merge:\ Resolve\ Conflicts<Tab>]x\ [x\ move,\ leader\ co/ct/cb/ca\ choose,\ dx\ drop :GitMergeTool<CR>
+	menu Git.Git\ Merge:\ Resolve\ Conflicts<Tab>meld:\ auto-merge,\ chunk\ arrows,\ base\ pane :GitMergeTool<CR>
 	menu Git.Toggle\ Git\ Lens :Gitsigns toggle_current_line_blame<CR>
 	"Buffers
 	menu Buffers.Scroll\ bind\ <Tab>:set\ scrollbind :set scrollbind<CR>
