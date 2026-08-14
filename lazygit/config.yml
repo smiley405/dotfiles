@@ -23,8 +23,8 @@ customCommands:
   # repo side by side, not just the changed files.
   - key: '<c-t>'
     context: 'commits'
-    description: 'meld folder diff vs this commit'
-    command: 'command -v meld >/dev/null || { echo "meld is not installed"; exit 1; }; command -v git-treediff >/dev/null || { echo "git-treediff is not on PATH -- rerun install.sh"; exit 1; }; setsid nohup git-treediff {{.SelectedCommit.Hash}} >/dev/null 2>&1 &'
+    description: 'meld folder diff of what this commit changed'
+    command: 'command -v meld >/dev/null || { echo "meld is not installed"; exit 1; }; command -v git-treediff >/dev/null || { echo "git-treediff is not on PATH -- rerun install.sh"; exit 1; }; setsid nohup git-treediff -c {{.SelectedCommit.Hash}} >/dev/null 2>&1 &'
     output: 'log'
 
   # the shifted twin of <ctrl+t>: one file there, everything here

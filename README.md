@@ -292,11 +292,17 @@ against the selected commit, and `T` in the files panel for the working tree
 against `HEAD`; lazygit has `<ctrl+t>` everywhere else already.
 
 Both run `bin/git-treediff`, not `git difftool -d`, which copies only the
-changed files into its temp dirs. The script extracts the whole commit with
-`git archive` and diffs it against the working tree, so every folder is there.
-The right pane is live -- saving in meld writes to your files -- and untracked
-files sit on that side alone. `-a` compares the differing files up front
-instead of on each click, and the panes are labelled with the ref rather than
-both reading as a temp path. Needs `~/.local/bin` on `$PATH` and a POSIX
-shell, so run lazygit inside WSL on a windows box.
+changed files into its temp dirs. The script extracts whole trees with `git
+archive`, so every folder is there.
+
+It has two modes, because the panels ask different things. `T` compares a ref
+against the working tree: that pane is live, so saving in meld writes to your
+files, and untracked files sit on that side alone. `<ctrl+t>` passes `-c` and
+compares a commit against its parent -- the file list lazygit shows for it.
+Without `-c` an older commit is measured against today's tree, which folds in
+every later commit and hides anything since changed back.
+
+Panes are labelled with the ref so neither reads as a temp path. Needs
+`~/.local/bin` on `$PATH` and a POSIX shell, so run lazygit inside WSL on a
+windows box.
 
