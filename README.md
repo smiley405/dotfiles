@@ -148,11 +148,10 @@ xclip outright: autodetection scans `$PATH` for every tool it misses, and the
 `/mnt/c` entries make that ~190ms of each startup. `:checkhealth vim.provider`
 shows which was picked.
 
-Selecting text flashes a blue `copied` chip for a second or two. wezterm fires
-no event when the clipboard is written, so `wezterm/wezterm.lua` hangs the chip
-off the three bindings that finish a selection -- drag, double click, triple
-click -- keeping their stock `ClipboardAndPrimarySelection`. The chip draws in
-the tab bar, hence `tab_bar_at_bottom`; flip it to move both back up.
+Selecting text flashes a blue `copied` chip in the tab bar for a second or two.
+wezterm fires no event when the clipboard is written, so `wezterm/wezterm.lua`
+hangs the chip off the three bindings that finish a selection -- drag, double
+click, triple click -- keeping their stock `ClipboardAndPrimarySelection`.
 
 It is built to survive wezterm updates. Right status is only ever written from
 this config, so a wezterm that ships its own indicator sits alongside rather
@@ -163,6 +162,36 @@ instead that click falls back to wezterm's default, so the copy still happens.
 `wezterm.gui` has no accessor for default *mouse* bindings, so the clipboard
 argument is pinned by hand. To recheck it against a nightly, diff `wezterm
 show-keys` against the same run over a `return {}` config.
+
+## The wezterm UI
+
+One palette at the top of `wezterm/wezterm.lua` feeds every piece of chrome.
+Each colour clears WCAG AA on its own surface; the inactive tab text used to
+be 4.00:1, under the 4.5 body text needs.
+
+The tab bar stays at the **top**, because every overlay -- tab navigator,
+`PaneSelect`, command palette -- opens from the top of the pane, and a bottom
+bar would put the tab list at the far end of the window from the tabs.
+
+It reports three things a modal, split-heavy setup otherwise hides:
+
+- **LEADER** while the leader is armed, so the 1s window is visible
+- **zoom**, since `LEADER o` hides every other pane and the count then lies
+- the **pane count**, dimmed at one pane -- true, but nothing to act on
+
+The active tab carries three cues -- accent bar, brighter text, filled glyph
+-- because the tab surfaces differ by only 1.5:1 and colour alone is no cue
+for anyone who cannot separate those greys. Tabs are numbered because
+`SHIFT+CTRL+<n>` jumps to one.
+
+Inactive panes are dimmed, which is what makes the focused one obvious and
+lets the split lines stay quiet. The new-tab and close buttons are gone; tabs
+open and close from the keyboard, and one of those buttons was a misclick that
+closed work. `LEADER p` opens the command palette. The bell is a cursor tint
+rather than a beep.
+
+`hide_tab_bar_if_only_one_tab` stays off on purpose -- leader, zoom and copied
+all report in that bar.
 
 ## kdiff3 as the merge and difftool
 

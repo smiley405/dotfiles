@@ -14,6 +14,22 @@ if wezterm.config_builder then
 end
 
 
+-- One palette for all the chrome. Every colour is WCAG AA on its own surface;
+-- the old inactive-tab grey was 4.00:1, under the 4.5 body text needs.
+local ui = {
+	bar = '#16181D',       -- the tab bar itself
+	tab = '#26292F',       -- an inactive tab, a shade up from the bar
+	tab_fg = '#8E93A6',    -- 4.77:1 on tab
+	active = '#000000',    -- active tab, same black as the terminal
+	active_fg = '#C9CCDA', -- 13.13:1 on active
+	status = '#A6ADBA',    -- 7.87:1 on bar
+	dim = '#80869B',       -- 4.91:1 on bar
+	line = '#5C6273',      -- split lines, 3.45:1 -- WCAG 1.4.11 for non-text
+	blue = '#4C8DF6',      -- transient success (copied)
+	amber = '#E5A44C',     -- a mode is armed (leader, zoom)
+	ink = '#0B1220',       -- text on blue/amber, 5.75:1 and 8.60:1
+}
+
 -- A "copied" chip on selection. wezterm fires no event when the clipboard is
 -- written, so the selection bindings raise it themselves. update-status ticks
 -- once a second, so the chip lives one to two.
@@ -30,8 +46,8 @@ local function draw_copied(window)
 	-- pcall so a reworked status API costs the chip and nothing around it
 	pcall(function()
 		window:set_right_status(lit and wezterm.format {
-			{ Background = { Color = '#2F6FEB' } },
-			{ Foreground = { Color = '#FFFFFF' } },
+			{ Background = { Color = ui.blue } },
+			{ Foreground = { Color = ui.ink } },
 			{ Text = ' \u{f018f} copied ' },
 		} or '')
 	end)
@@ -63,12 +79,34 @@ wezterm.on('update-status', function(window, pane)
 	local tab = pane:tab()
 	-- panes such as the debug overlay aren't attached to a tab
 	if not tab then return end
-	local total_panes = '  x ' .. #(tab:panes())
+	local cells = {}
 
-	window:set_left_status(wezterm.format {
-		{ Foreground = { Color = '#A6ADBA' } },
-		{ Text = total_panes .. ' ' },
-	})
+	-- a modal keymap with no visible mode is a guessing game
+	if window:leader_is_active() then
+		cells[#cells + 1] = { Background = { Color = ui.amber } }
+		cells[#cells + 1] = { Foreground = { Color = ui.ink } }
+		cells[#cells + 1] = { Text = ' LEADER ' }
+		cells[#cells + 1] = { Background = { Color = ui.bar } }
+	end
+
+	-- Zoom hides every other pane, so the count alone reads as a lie.
+	-- panes_with_info has both; there is no is_zoomed() on a pane.
+	local infos = tab:panes_with_info()
+	local panes, zoomed = #infos, false
+	for _, info in ipairs(infos) do
+		if info.is_zoomed then zoomed = true end
+	end
+
+	if zoomed then
+		cells[#cells + 1] = { Foreground = { Color = ui.amber } }
+		cells[#cells + 1] = { Text = ' zoom' }
+	end
+
+	-- dimmed at one pane: true, but nothing to act on
+	cells[#cells + 1] = { Foreground = { Color = panes > 1 and ui.status or ui.dim } }
+	cells[#cells + 1] = { Text = '  \u{eb23} ' .. panes .. ' ' }
+
+	window:set_left_status(wezterm.format(cells))
 end)
 
 
@@ -90,31 +128,31 @@ end
 wezterm.on(
 'format-tab-title',
 function(tab, tabs, panes, config, hover, max_width)
-	local background = '#282B32'
-	local foreground = '#83879F'
-
-	local activeTabIcon = '󰧛 '
+	local background = ui.tab
+	local foreground = ui.tab_fg
+	-- Three cues, not one: the tab surfaces differ by only 1.5:1, so colour
+	-- alone is no cue for anyone who cannot separate those greys.
+	local edge = ' '
+	local icon = '\u{f09db} '
 
 	if tab.is_active then
-		background = '#000000'
-		foreground = '#B7B9C7'
-		activeTabIcon = '󰧚 '
+		background = ui.active
+		foreground = ui.active_fg
+		edge = '\u{258e}'
+		icon = '\u{f09da} '
+	elseif hover then
+		foreground = ui.active_fg
 	end
 
-
-	local title = tab_title(tab)
-
-	-- ensure that the titles fit in the available space,
-	-- and that we have room for the edges.
-	title = wezterm.truncate_right(title, max_width - 2)
+	-- numbered because SHIFT+CTRL+<n> jumps to a tab
+	local title = wezterm.truncate_right(tab_title(tab), max_width - 6)
 
 	return {
 		{ Background = { Color = background } },
-		{ Foreground = { Color = foreground} },
-		{ Text = activeTabIcon },
-		{ Background = { Color = background } },
+		{ Foreground = { Color = tab.is_active and ui.blue or background } },
+		{ Text = edge },
 		{ Foreground = { Color = foreground } },
-		{ Text = title },
+		{ Text = icon .. (tab.tab_index + 1) .. ' ' .. title .. ' ' },
 	}
 end
 )
@@ -124,9 +162,43 @@ config.check_for_updates = false
 -- something like that in other tui app's config settings
 config.enable_scroll_bar = true
 
--- The chip draws in the tab bar, and the prompt and nvim's statusline are
--- already at the bottom, so that is the shorter look. Flip to move both up.
-config.tab_bar_at_bottom = true
+-- Top, because every overlay -- tab navigator, PaneSelect, palette -- opens
+-- from the top of the pane, and a bottom bar puts the tab list opposite the tabs.
+config.tab_bar_at_bottom = false
+
+-- retro draws in terminal cells and obeys the palette; fancy uses its own font
+config.use_fancy_tab_bar = false
+
+-- never hidden: leader, zoom and copied all report in this bar
+config.hide_tab_bar_if_only_one_tab = false
+
+-- tabs open and close from the keyboard, and one button is a misclick that
+-- closes work
+config.show_new_tab_button_in_tab_bar = false
+config.show_close_tab_button_in_tabs = false
+config.tab_max_width = 28
+
+-- dimming what is unfocused is what makes the active pane obvious
+config.inactive_pane_hsb = { saturation = 0.85, brightness = 0.65 }
+
+config.window_padding = { left = 10, right = 10, top = 6, bottom = 4 }
+
+-- a cursor tint says the same as a beep, without the jolt
+config.audible_bell = 'Disabled'
+config.visual_bell = {
+	fade_in_duration_ms = 60,
+	fade_out_duration_ms = 180,
+	target = 'CursorColor',
+}
+
+-- overlays take the palette too, not wezterm's stock blue
+config.command_palette_bg_color = ui.tab
+config.command_palette_fg_color = ui.active_fg
+config.command_palette_rows = 12
+config.char_select_bg_color = ui.tab
+config.char_select_fg_color = ui.active_fg
+config.pane_select_bg_color = ui.bar
+config.pane_select_fg_color = ui.amber
 
 -- On Windows, start straight in WSL Ubuntu instead of cmd.exe. Everywhere else
 -- (linux/macos) this is a no-op and the native login shell is used.
@@ -222,10 +294,24 @@ config.leader = { key = 'Space', mods = 'CTRL', timeout_milliseconds = 1000 }
 
 
 config.colors = {
-	compose_cursor = 'orange',
+	compose_cursor = ui.amber,
 
-	-- The color of the split lines between panes
-	split = '#5AD56A',
+	-- a seam, not a stripe -- still over the 3:1 WCAG wants for non-text.
+	-- Focus is carried by the dimming above, not by this line.
+	split = ui.line,
+
+	scrollbar_thumb = ui.tab,
+
+	tab_bar = {
+		background = ui.bar,
+		-- format-tab-title paints the tabs; these are the states it does not
+		active_tab = { bg_color = ui.active, fg_color = ui.active_fg },
+		inactive_tab = { bg_color = ui.tab, fg_color = ui.tab_fg },
+		inactive_tab_hover = { bg_color = ui.tab, fg_color = ui.active_fg },
+		new_tab = { bg_color = ui.bar, fg_color = ui.dim },
+		new_tab_hover = { bg_color = ui.tab, fg_color = ui.active_fg },
+		inactive_tab_edge = ui.bar,
+	},
 }
 
 
@@ -254,6 +340,9 @@ config.keys = {
 
 	-- LEADER w -- pick a pane
 	{ key = 'w', mods = 'LEADER', action = act.PaneSelect },
+
+	-- LEADER p -- command palette, the searchable form of all of these
+	{ key = 'p', mods = 'LEADER', action = act.ActivateCommandPalette },
 
 	-- LEADER x -- exchange with the pane picked
 	{
