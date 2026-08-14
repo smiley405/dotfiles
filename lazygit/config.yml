@@ -1,16 +1,15 @@
 customCommands:
-  # lazygit has <ctrl+t> everywhere but here. -d compares the whole tree,
-  # and kdiff3 writes straight to your files -- --no-symlinks to be asked.
+  # lazygit has <ctrl+t> everywhere but here. bin/git-treediff opens the whole
+  # repo side by side, not just the changed files.
   - key: '<c-t>'
     context: 'commits'
     description: 'kdiff3 folder diff vs this commit'
-    command: 'command -v kdiff3 >/dev/null && { setsid nohup git difftool -d --no-prompt {{.SelectedCommit.Hash}} >/dev/null 2>&1 & } || echo "kdiff3 is not installed"'
+    command: 'command -v kdiff3 >/dev/null || { echo "kdiff3 is not installed"; exit 1; }; command -v git-treediff >/dev/null || { echo "git-treediff is not on PATH -- rerun install.sh"; exit 1; }; setsid nohup git-treediff {{.SelectedCommit.Hash}} >/dev/null 2>&1 &'
     output: 'log'
 
-  # The shifted twin of <ctrl+t>: one file there, everything here.
-  # Untracked files are missing -- git diff does not see them.
+  # the shifted twin of <ctrl+t>: one file there, everything here
   - key: 'T'
     context: 'files'
     description: 'kdiff3 folder diff of all current changes'
-    command: 'command -v kdiff3 >/dev/null && { setsid nohup git difftool -d --no-prompt HEAD >/dev/null 2>&1 & } || echo "kdiff3 is not installed"'
+    command: 'command -v kdiff3 >/dev/null || { echo "kdiff3 is not installed"; exit 1; }; command -v git-treediff >/dev/null || { echo "git-treediff is not on PATH -- rerun install.sh"; exit 1; }; setsid nohup git-treediff HEAD >/dev/null 2>&1 &'
     output: 'log'

@@ -1,0 +1,30 @@
+#!/usr/bin/env bash
+#
+# kdiff3 folder diff of the whole repo -- lazygit's <c-t>/T.
+#
+# `git difftool -d` copies only the changed files into its temp dirs, so the
+# tree kdiff3 opens has nothing else in it. Here the left side is a full
+# checkout of the ref and the right side is the working tree itself, live:
+# what kdiff3 saves there lands in your files.
+
+set -euo pipefail
+
+die() { printf 'git-treediff: %s\n' "$*" >&2; exit 1; }
+
+command -v kdiff3 >/dev/null 2>&1 || die 'kdiff3 is not installed'
+
+# a tag or branch name is just as good a left side
+ref=${1:-HEAD}
+git rev-parse --verify --quiet "$ref^{commit}" >/dev/null || die "not a commit: $ref"
+top=$(git rev-parse --show-toplevel)
+
+# the ref names the leaf, so kdiff3 labels the pane with it and not XXXXXX
+tmp=$(mktemp -d -t git-treediff.XXXXXXXX)
+trap 'rm -rf -- "$tmp"' EXIT
+old=$tmp/$(printf '%s' "$ref" | tr -c 'A-Za-z0-9._-' '_')
+mkdir -p -- "$old"
+
+# an archive, not a worktree: tracked files at that ref and no .git of its own
+git archive --format=tar "$ref" | tar -x -C "$old"
+
+kdiff3 -- "$old" "$top"

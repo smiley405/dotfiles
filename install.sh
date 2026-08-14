@@ -66,7 +66,7 @@ if is_macos && [ -z "${XDG_CONFIG_HOME:-}" ]; then
 else
 	link "$repo/lazygit" "$config/lazygit"
 fi
-for script in yazi-wez reveal; do
+for script in yazi-wez reveal git-treediff; do
 	link "$repo/bin/$script" "$bindir/$script"
 	# never fatal: set -e would otherwise abandon the rest of the install
 	chmod +x "$repo/bin/$script" 2>/dev/null || info "note    could not chmod +x bin/$script"
@@ -114,5 +114,5 @@ done
 
 case ":${PATH-}:" in
 	*":$bindir:"*) ;;
-	*) info "note    $bindir is not on \$PATH -- yazi's <C-o>/<C-t>/<C-e> need it there" ;;
+	*) info "note    $bindir is not on \$PATH -- yazi's <C-o>/<C-t>/<C-e> and lazygit's folder diffs need it there" ;;
 esac

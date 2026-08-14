@@ -185,6 +185,14 @@ is blank too, run `wsl --update` then `wsl --shutdown`. The `[WARN:COPY MODE]`
 title prefix is unrelated and stays.
 
 `lazygit/config.yml` puts `<ctrl+t>` on the commits panel for a folder diff
-against the selected commit; lazygit has that key everywhere else already.
+against the selected commit, and `T` in the files panel for the working tree
+against `HEAD`; lazygit has `<ctrl+t>` everywhere else already.
+
+Both run `bin/git-treediff`, not `git difftool -d`, which copies only the
+changed files into its temp dirs. The script extracts the whole commit with
+`git archive` and diffs it against the working tree, so every folder is there.
+The right pane is live -- saving in kdiff3 writes to your files -- and
+untracked files sit on that side alone. Needs `~/.local/bin` on `$PATH` and a
+POSIX shell, so run lazygit inside WSL on a windows box.
 
 1.12.4 everywhere but Ubuntu 24.04 -- 1.10.7, and no backport. 26.04 has 1.12.4.
