@@ -97,9 +97,10 @@ wezterm.on('update-status', function(window, pane)
 	-- error per closing window otherwise.
 	local ok, infos = pcall(function() return tab:panes_with_info() end)
 	if not ok then return end
-	local panes, zoomed = #infos, false
+	local panes, zoomed, active = #infos, false, nil
 	for _, info in ipairs(infos) do
 		if info.is_zoomed then zoomed = true end
+		if info.is_active then active = info.index + 1 end
 	end
 
 	if zoomed then
@@ -109,8 +110,10 @@ wezterm.on('update-status', function(window, pane)
 
 	-- Accent, and never dimmed: it sits left of tab 1 and both show a number,
 	-- so without a colour of its own it reads as one more tab.
+	-- which of how many: a dark TUI has little background to dim, a number moves
 	cells[#cells + 1] = { Foreground = { Color = ui.blue } }
-	cells[#cells + 1] = { Text = '  \u{eb23} ' .. panes .. '  ' }
+	local count = panes > 1 and (active or '?') .. '/' .. panes or tostring(panes)
+	cells[#cells + 1] = { Text = '  \u{eb23} ' .. count .. '  ' }
 
 	window:set_left_status(wezterm.format(cells))
 end)
@@ -216,8 +219,9 @@ config.show_new_tab_button_in_tab_bar = false
 config.show_close_tab_button_in_tabs = false
 config.tab_max_width = 28
 
--- dimming what is unfocused is what makes the active pane obvious
-config.inactive_pane_hsb = { saturation = 0.85, brightness = 0.65 }
+-- No active-pane border in wezterm, and one split colour for every divider,
+-- so dimming is the only thing that says where you are.
+config.inactive_pane_hsb = { saturation = 0.7, brightness = 0.45 }
 
 config.window_padding = { left = 10, right = 10, top = 6, bottom = 4 }
 
