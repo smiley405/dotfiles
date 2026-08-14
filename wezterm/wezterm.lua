@@ -107,9 +107,10 @@ wezterm.on('update-status', function(window, pane)
 		cells[#cells + 1] = { Text = ' zoom' }
 	end
 
-	-- dimmed at one pane: true, but nothing to act on
-	cells[#cells + 1] = { Foreground = { Color = panes > 1 and ui.status or ui.dim } }
-	cells[#cells + 1] = { Text = '  \u{eb23} ' .. panes .. ' ' }
+	-- Accent, and never dimmed: it sits left of tab 1 and both show a number,
+	-- so without a colour of its own it reads as one more tab.
+	cells[#cells + 1] = { Foreground = { Color = ui.blue } }
+	cells[#cells + 1] = { Text = '  \u{eb23} ' .. panes .. '  ' }
 
 	window:set_left_status(wezterm.format(cells))
 end)
