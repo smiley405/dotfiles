@@ -4,9 +4,8 @@
 #
 #     pwsh -ExecutionPolicy Bypass -File install.ps1
 #
-# Linux, macos and WSL use install.sh. Directory links are junctions, not
-# symlinks: a symlink needs elevation or developer mode, a junction needs
-# neither. Idempotent, and anything real in the way is moved aside, not deleted.
+# Linux, macos and WSL use install.sh. Links are junctions, not symlinks: a
+# symlink needs elevation or developer mode, a junction needs neither.
 
 [CmdletBinding()]
 param()
@@ -128,6 +127,7 @@ Write-Host "dotfiles: linking from $repo"
 Set-Junction -Target (Join-Path $repo 'nvim')    -Link (Join-Path $env:LOCALAPPDATA 'nvim')
 Set-Junction -Target (Join-Path $repo 'yazi')    -Link (Join-Path $env:APPDATA 'yazi\config')
 Set-Junction -Target (Join-Path $repo 'wezterm') -Link (Join-Path $env:USERPROFILE '.config\wezterm')
+Set-Junction -Target (Join-Path $repo 'lazygit') -Link (Join-Path $env:LOCALAPPDATA 'lazygit')
 
 # yazi calls `yazi-wez` and `reveal` by bare name, which needs bin\*.cmd on PATH
 Write-Host 'dotfiles: PATH'
@@ -138,8 +138,7 @@ Write-Host 'dotfiles: shell integration'
 Add-ProfileSource -File (Join-Path $repo 'pwsh\yazi-cd.ps1') `
 	-Why 'y -- yazi, leaving the shell where you exited'
 
-# cmd has no functions, so it gets a batch file instead -- already live from the
-# PATH entry above, nothing to wire
+# cmd has no functions, so it gets a batch file -- live from the PATH above
 if (Test-Path -LiteralPath (Join-Path $bin 'y.cmd')) {
 	Info "ok      cmd uses bin\y.cmd"
 } else {
@@ -159,12 +158,37 @@ if (Get-Command 'file' -ErrorAction SilentlyContinue) {
 	}
 }
 
+Write-Host 'dotfiles: git'
+
+# not a junction: git reads the settings through an include in ~/.gitconfig.
+# forward slashes, so the path needs no escaping once git writes it out
+$difftoolConf = ($repo -replace '\\', '/') + '/git/meld.gitconfig'
+$oldConf = ($repo -replace '\\', '/') + '/git/kdiff3.gitconfig'
+$includes = @(git config --global --get-all include.path 2>$null)
+
+# this used to be kdiff3.gitconfig; drop that include or both would apply and
+# the later one would decide the tool. --fixed-value keeps the dots in the
+# path from being read as a pattern, and takes only that one entry.
+if ($includes -contains $oldConf) {
+	git config --global --unset-all --fixed-value include.path $oldConf
+	Info "config  dropped the old kdiff3.gitconfig include"
+}
+
+if ($includes -contains $difftoolConf) {
+	Info "ok      git includes meld.gitconfig"
+} else {
+	git config --global --add include.path $difftoolConf
+	Info "config  git now includes meld.gitconfig"
+}
+
 Write-Host 'dotfiles: dependencies'
-foreach ($tool in 'nvim', 'yazi', 'rg', 'fd', 'jq', 'wezterm', 'pwsh') {
+foreach ($tool in 'nvim', 'yazi', 'lazygit', 'rg', 'fd', 'jq', 'wezterm', 'pwsh', 'meld') {
 	if (Get-Command $tool -ErrorAction SilentlyContinue) {
 		Info "ok      $tool"
 	} elseif ($tool -eq 'pwsh') {
 		Info "note    pwsh not found -- falling back to windows powershell 5.1"
+	} elseif ($tool -eq 'meld') {
+		Info "note    meld not found -- optional, but folder diffs and merges need it"
 	} else {
 		Info "MISSING $tool"
 	}

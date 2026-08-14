@@ -1,0 +1,69 @@
+#!/usr/bin/env bash
+#
+# meld folder diff -- lazygit's T and <c-t>.
+#
+#   git-treediff [<ref>]      ref vs the working tree, which is live: saving
+#                             in meld lands in your files.
+#   git-treediff -c <commit>  what the commit changed, parent vs itself. Both
+#                             sides are extracts. Without -c an old commit is
+#                             measured against today's tree, folding in every
+#                             later one.
+#
+# Whole trees, unlike `git difftool -d`, which copies out only what changed.
+
+set -euo pipefail
+
+die() { printf 'git-treediff: %s\n' "$*" >&2; exit 1; }
+
+command -v meld >/dev/null 2>&1 || die 'meld is not installed'
+
+commit_mode=0
+if [ "${1-}" = -c ]; then
+	commit_mode=1
+	shift
+fi
+
+# a tag or branch name is just as good a left side
+ref=${1:-HEAD}
+git rev-parse --verify --quiet "$ref^{commit}" >/dev/null || die "not a commit: $ref"
+
+# meld is single-instance: with one already open, a second invocation hands
+# the paths over and exits, so this cannot know when the window closes.
+# Deleting on exit pulled the extract out from under it; sweep old runs.
+find /tmp -maxdepth 1 -name 'git-treediff.*' -type d -mtime +0 \
+	-exec rm -rf -- {} + 2>/dev/null || true
+
+tmp=$(mktemp -d -t git-treediff.XXXXXXXX)
+
+# the rev names the leaf dir, so labels read as the ref and not XXXXXX
+extract() {
+	local rev=$1 name=$2 dir
+	dir=$tmp/$(printf '%s' "$name" | tr -c 'A-Za-z0-9._-' '_')
+	mkdir -p -- "$dir"
+	# an archive, not a worktree: tracked files at that rev, no .git of its own
+	git archive --format=tar "$rev" | tar -x -C "$dir"
+	printf '%s' "$dir"
+}
+
+if [ "$commit_mode" -eq 1 ]; then
+	# a root commit has no parent, so git's empty tree stands in for one
+	if git rev-parse --verify --quiet "$ref^{commit}^" >/dev/null; then
+		parent=$ref^
+		left_label="$ref^"
+	else
+		parent=$(git hash-object -t tree /dev/null)
+		left_label='(empty)'
+	fi
+	left=$(extract "$parent" "$ref-parent")
+	right=$(extract "$ref" "$ref")
+	right_label=$ref
+else
+	left=$(extract "$ref" "$ref")
+	right=$(git rev-parse --show-toplevel)
+	left_label=$ref
+	right_label='working tree'
+fi
+
+# No -a: it opens a tab per differing file, which is unusable on a large
+# change. Opening a file from the tree adds a tab, it does not replace it.
+meld -L "$left_label" -L "$right_label" -- "$left" "$right"

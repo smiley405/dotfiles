@@ -1,8 +1,7 @@
 #!/usr/bin/env bash
 #
-# Links this checkout into place on linux, macos and WSL; windows has its own
-# entry point, install.ps1. Idempotent, and anything real sitting where a link
-# belongs is moved aside, never deleted.
+# Links this checkout into place on linux, macos and WSL; windows uses
+# install.ps1. Idempotent, and anything real in the way is moved aside.
 
 set -euo pipefail
 
@@ -12,6 +11,8 @@ bindir=$HOME/.local/bin
 
 # under WSL wezterm is windows-side, so that checkout owns wezterm/
 is_wsl() { [ -n "${WSL_DISTRO_NAME:-}" ] || grep -qi microsoft /proc/version 2>/dev/null; }
+
+is_macos() { [ "$(uname)" = Darwin ]; }
 
 info() { printf '  %s\n' "$*"; }
 
@@ -36,7 +37,7 @@ bashrc_source() {
 link() {
 	local src=$1 dst=$2 backup
 
-	# compare with what we would write: portable, and enough to spot a foreign link
+	# portable, and enough to spot a link pointing somewhere else
 	if [ -L "$dst" ] && [ "$(readlink -- "$dst")" = "$src" ]; then
 		info "ok      $dst"
 		return
@@ -57,7 +58,15 @@ printf 'dotfiles: linking from %s\n' "$repo"
 
 link "$repo/nvim" "$config/nvim"
 link "$repo/yazi" "$config/yazi"
-for script in yazi-wez reveal; do
+
+# lazygit is the exception: macos reads Application Support, unless
+# XDG_CONFIG_HOME is set, which lazygit honours there too
+if is_macos && [ -z "${XDG_CONFIG_HOME:-}" ]; then
+	link "$repo/lazygit" "$HOME/Library/Application Support/lazygit"
+else
+	link "$repo/lazygit" "$config/lazygit"
+fi
+for script in yazi-wez reveal git-treediff; do
 	link "$repo/bin/$script" "$bindir/$script"
 	# never fatal: set -e would otherwise abandon the rest of the install
 	chmod +x "$repo/bin/$script" 2>/dev/null || info "note    could not chmod +x bin/$script"
@@ -74,18 +83,42 @@ printf 'dotfiles: shell integration\n'
 # every platform, unlike the OSC 7 block below
 bashrc_source yazi-cd.bash 'y() -- yazi, leaving the shell where you exited'
 
-# OSC 7 cwd reporting: under WSL the terminal is a windows app and the shell is
-# in the VM, so /proc is out of reach and only the escape sequence gets through.
+# OSC 7: the terminal is a windows app and the shell is in the VM, so /proc is
+# out of reach and only the escape sequence gets through.
 if is_wsl; then
 	bashrc_source wsl-shell-integration.bash 'OSC 7 cwd reporting (wezterm tab/split inherits cwd under WSL)'
 fi
 
+printf 'dotfiles: git\n'
+
+# not a link: git reads the settings through an include in ~/.gitconfig.
+# --add, since a plain set would replace an include that is already there
+difftool_conf=$repo/git/meld.gitconfig
+
+# this used to be kdiff3.gitconfig; drop that include or both would apply and
+# the later one would decide the tool. --fixed-value so the dots in the path
+# are not read as a pattern, and only that one entry goes.
+old_conf=$repo/git/kdiff3.gitconfig
+if git config --global --get-all include.path 2>/dev/null | grep -qxF "$old_conf"; then
+	git config --global --unset-all --fixed-value include.path "$old_conf"
+	info "config  dropped the old kdiff3.gitconfig include"
+fi
+
+if git config --global --get-all include.path 2>/dev/null | grep -qxF "$difftool_conf"; then
+	info "ok      git includes meld.gitconfig"
+else
+	git config --global --add include.path "$difftool_conf"
+	info "config  git now includes meld.gitconfig"
+fi
+
 printf 'dotfiles: dependencies\n'
-for tool in nvim yazi rg fd jq wezterm; do
+for tool in nvim yazi lazygit rg fd jq wezterm meld; do
 	if command -v "$tool" >/dev/null 2>&1; then
 		info "ok      $tool"
 	elif [ "$tool" = wezterm ] && command -v wezterm.exe >/dev/null 2>&1; then
 		info "ok      wezterm (wezterm.exe via WSL interop)"
+	elif [ "$tool" = meld ]; then
+		info "note    meld not found -- optional, but folder diffs and merges need it"
 	else
 		info "MISSING $tool"
 	fi
@@ -93,5 +126,5 @@ done
 
 case ":${PATH-}:" in
 	*":$bindir:"*) ;;
-	*) info "note    $bindir is not on \$PATH -- yazi's <C-o>/<C-t>/<C-e> need it there" ;;
+	*) info "note    $bindir is not on \$PATH -- yazi's <C-o>/<C-t>/<C-e> and lazygit's folder diffs need it there" ;;
 esac

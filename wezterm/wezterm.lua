@@ -14,19 +14,108 @@ if wezterm.config_builder then
 end
 
 
+-- Chrome from tokyonight_night, the scheme nvim runs, so terminal, editor and
+-- bar are one palette. comment (2.91:1) and terminal_black (1.91:1) are
+-- lightened: fine as syntax, too dark as UI. AA on every surface, 3:1 non-text.
+local ui = {
+	bar = '#16161E',       -- bg_dark, one step under the terminal
+	tab = '#292E42',       -- bg_highlight, an inactive tab
+	tab_fg = '#A9B1D6',    -- fg_dark, 6.36:1 on tab
+	active = '#1A1B26',    -- the terminal's own bg: the tab joins its content
+	active_fg = '#C0CAF5', -- fg, 10.59:1 on active
+	status = '#A9B1D6',    -- 8.52:1 on bar
+	dim = '#7982AB',       -- comment, lightened to clear 4.79:1 on bar
+	line = '#616A90',      -- terminal_black, lightened to 3.23:1 on the terminal
+	blue = '#7AA2F7',      -- transient success (copied)
+	amber = '#E0AF68',     -- a mode is armed (leader, zoom)
+	ink = '#1A1B26',       -- text on blue/amber, 6.79:1 and 8.55:1
+}
+
+-- A "copied" chip on selection. wezterm fires no event when the clipboard is
+-- written, so the selection bindings raise it themselves. update-status ticks
+-- once a second, so the chip lives one to two.
+local COPIED_TOAST_SECONDS = 2
+local copied_at = nil
+
+-- wezterm.gui exposes no default *mouse* bindings to read this back from, so it
+-- is pinned to what `wezterm show-keys` reports. Recheck after a nightly bump.
+local COMPLETE_SELECTION = 'ClipboardAndPrimarySelection'
+
+local function draw_copied(window)
+	local lit = copied_at ~= nil and os.time() - copied_at < COPIED_TOAST_SECONDS
+	if not lit then copied_at = nil end
+	-- pcall so a reworked status API costs the chip and nothing around it
+	pcall(function()
+		window:set_right_status(lit and wezterm.format {
+			{ Background = { Color = ui.blue } },
+			{ Foreground = { Color = ui.ink } },
+			{ Text = ' \u{f018f} copied ' },
+		} or '')
+	end)
+end
+
+-- Read the selection before the action runs. An empty one earns no chip: a bare
+-- click completes a selection too, and that is a click, not a copy.
+local function copy_and_say(action)
+	return wezterm.action_callback(function(window, pane)
+		local ok, selection = pcall(function()
+			return window:get_selection_text_for_pane(pane)
+		end)
+		-- outside the pcall and unconditional: the copy never depends on the chip
+		window:perform_action(action, pane)
+		if ok and selection and #selection > 0 then
+			copied_at = os.time()
+			draw_copied(window)
+		end
+	end)
+end
+
+
 -- status bar
 wezterm.on('update-status', function(window, pane)
 	-- "Wed Mar 3 08:14"
+	-- ahead of the early returns: the chip must expire even in a tabless pane
+	draw_copied(window)
 	if not pane then return end
 	local tab = pane:tab()
 	-- panes such as the debug overlay aren't attached to a tab
 	if not tab then return end
-	local total_panes = '  x ' .. #(tab:panes())
+	local cells = {}
 
-	window:set_left_status(wezterm.format {
-		{ Foreground = { Color = '#A6ADBA' } },
-		{ Text = total_panes .. ' ' },
-	})
+	-- a modal keymap with no visible mode is a guessing game
+	if window:leader_is_active() then
+		cells[#cells + 1] = { Background = { Color = ui.amber } }
+		cells[#cells + 1] = { Foreground = { Color = ui.ink } }
+		cells[#cells + 1] = { Text = ' LEADER ' }
+		cells[#cells + 1] = { Background = { Color = ui.bar } }
+	end
+
+	-- Zoom hides every other pane, so the count alone reads as a lie.
+	-- panes_with_info has both; there is no is_zoomed() on a pane.
+	-- pcall: a tab torn down between pane:tab() and here raises "tab id 0 not
+	-- found in mux". Rare, and only ever on the way out, but it is one stray
+	-- error per closing window otherwise.
+	local ok, infos = pcall(function() return tab:panes_with_info() end)
+	if not ok then return end
+	local panes, zoomed, active = #infos, false, nil
+	for _, info in ipairs(infos) do
+		if info.is_zoomed then zoomed = true end
+		if info.is_active then active = info.index + 1 end
+	end
+
+	if zoomed then
+		cells[#cells + 1] = { Foreground = { Color = ui.amber } }
+		cells[#cells + 1] = { Text = ' zoom' }
+	end
+
+	-- Accent, and never dimmed: it sits left of tab 1 and both show a number,
+	-- so without a colour of its own it reads as one more tab.
+	-- which of how many: a dark TUI has little background to dim, a number moves
+	cells[#cells + 1] = { Foreground = { Color = ui.blue } }
+	local count = panes > 1 and (active or '?') .. '/' .. panes or tostring(panes)
+	cells[#cells + 1] = { Text = '  \u{eb23} ' .. count .. '  ' }
+
+	window:set_left_status(wezterm.format(cells))
 end)
 
 
@@ -45,34 +134,66 @@ local function tab_title(tab_info)
 	return tab_info.active_pane.title
 end
 
+-- An editor tab says what is in it; a terminal tab can too. Glyph names are
+-- from `wezterm ls-fonts --text`, so every one of these resolves.
+local PROGRAM_ICONS = {
+	nvim = '\u{e62b}',
+	vim = '\u{e62b}',
+	lazygit = '\u{e702}',
+	git = '\u{e702}',
+	yazi = '\u{f07c}',
+	node = '\u{e718}',
+	npm = '\u{e718}',
+	python = '\u{e73c}',
+	python3 = '\u{e73c}',
+	docker = '\u{e7b0}',
+}
+local SHELL_ICON = '\u{ebca}'
+
+-- Returns the program and, when the title carried it, the name to show.
+local function tab_program(tab)
+	local pane = tab.active_pane
+	local proc = ((pane.foreground_process_name or ''):lower():match('[^\\/]+$') or '')
+		:gsub('%.exe$', '')
+	if PROGRAM_ICONS[proc] then return proc, nil end
+
+	-- Every WSL pane reports wslhost.exe, so the process says nothing there and
+	-- the program names itself in the title instead -- see nvim's titlestring
+	-- in nvim/lua/config/_default.lua.
+	local name, rest = (pane.title or ''):match('^(%a+): (.+)$')
+	if name and PROGRAM_ICONS[name:lower()] then return name:lower(), rest end
+	return nil, nil
+end
+
 wezterm.on(
 'format-tab-title',
 function(tab, tabs, panes, config, hover, max_width)
-	local background = '#282B32'
-	local foreground = '#83879F'
-
-	local activeTabIcon = '󰧛 '
+	local background = ui.tab
+	local foreground = ui.tab_fg
+	-- The accent bar is a shape, not a shade: the tab surfaces differ by only
+	-- 1.27:1, too little to be the only thing telling them apart.
+	local edge = ' '
 
 	if tab.is_active then
-		background = '#000000'
-		foreground = '#B7B9C7'
-		activeTabIcon = '󰧚 '
+		background = ui.active
+		foreground = ui.active_fg
+		edge = '\u{258e}'
+	elseif hover then
+		foreground = ui.active_fg
 	end
 
+	local program, named = tab_program(tab)
+	local icon = (program and PROGRAM_ICONS[program] or SHELL_ICON) .. ' '
 
-	local title = tab_title(tab)
-
-	-- ensure that the titles fit in the available space,
-	-- and that we have room for the edges.
-	title = wezterm.truncate_right(title, max_width - 2)
+	-- numbered because SHIFT+CTRL+<n> jumps to a tab
+	local title = wezterm.truncate_right(named or tab_title(tab), max_width - 6)
 
 	return {
 		{ Background = { Color = background } },
-		{ Foreground = { Color = foreground} },
-		{ Text = activeTabIcon },
-		{ Background = { Color = background } },
+		{ Foreground = { Color = tab.is_active and ui.blue or background } },
+		{ Text = edge },
 		{ Foreground = { Color = foreground } },
-		{ Text = title },
+		{ Text = icon .. (tab.tab_index + 1) .. ' ' .. title .. ' ' },
 	}
 end
 )
@@ -81,6 +202,48 @@ config.check_for_updates = false
 -- to make the scrollbar visible, you might need to add settings.json this { "tui": "default" }
 -- something like that in other tui app's config settings
 config.enable_scroll_bar = true
+
+-- Top, because every overlay -- tab navigator, PaneSelect, palette -- opens
+-- from the top of the pane, and a bottom bar puts the tab list opposite the tabs.
+config.tab_bar_at_bottom = false
+
+-- retro draws in terminal cells and obeys the palette; fancy uses its own font
+config.use_fancy_tab_bar = false
+
+-- never hidden: leader, zoom and copied all report in this bar
+config.hide_tab_bar_if_only_one_tab = false
+
+-- tabs open and close from the keyboard, and one button is a misclick that
+-- closes work
+config.show_new_tab_button_in_tab_bar = false
+config.show_close_tab_button_in_tabs = false
+config.tab_max_width = 28
+
+-- No active-pane border in wezterm, and one split colour for every divider,
+-- so dimming is the only thing that says where you are.
+config.inactive_pane_hsb = { saturation = 0.7, brightness = 0.45 }
+
+config.window_padding = { left = 10, right = 10, top = 6, bottom = 4 }
+
+-- a little air between rows; long log output is what this is for
+config.line_height = 1.1
+
+-- a cursor tint says the same as a beep, without the jolt
+config.audible_bell = 'Disabled'
+config.visual_bell = {
+	fade_in_duration_ms = 60,
+	fade_out_duration_ms = 180,
+	target = 'CursorColor',
+}
+
+-- overlays take the palette too, not wezterm's stock blue
+config.command_palette_bg_color = ui.tab
+config.command_palette_fg_color = ui.active_fg
+config.command_palette_rows = 12
+config.char_select_bg_color = ui.tab
+config.char_select_fg_color = ui.active_fg
+config.pane_select_bg_color = ui.bar
+config.pane_select_fg_color = ui.amber
 
 -- On Windows, start straight in WSL Ubuntu instead of cmd.exe. Everywhere else
 -- (linux/macos) this is a no-op and the native login shell is used.
@@ -133,6 +296,37 @@ local function tab_like_parent()
 	end)
 end
 
+-- The three ways a left button finishes a selection: drag, double click, triple
+-- click. Stock bindings with copy_and_say wrapped round them; the rest of the
+-- mouse keeps wezterm's defaults, which merge in around these.
+--
+-- Built behind pcall, not as a literal: naming an action a future wezterm has
+-- dropped raises as this file loads, taking the leader table with it. Skipping
+-- one restores wezterm's default, so the copy survives and only the chip goes.
+local selection_bindings = {}
+
+local function add_selection_binding(streak, build)
+	local ok, action = pcall(build)
+	if not ok then
+		wezterm.log_warn('copied chip: no selection action for streak '
+			.. streak .. ', leaving that click on its default')
+		return
+	end
+	table.insert(selection_bindings, {
+		event = { Up = { streak = streak, button = 'Left' } },
+		mods = 'NONE',
+		action = copy_and_say(action),
+	})
+end
+
+add_selection_binding(1, function()
+	return act.CompleteSelectionOrOpenLinkAtMouseCursor(COMPLETE_SELECTION)
+end)
+add_selection_binding(2, function() return act.CompleteSelection(COMPLETE_SELECTION) end)
+add_selection_binding(3, function() return act.CompleteSelection(COMPLETE_SELECTION) end)
+
+config.mouse_bindings = selection_bindings
+
 config.leader = { key = 'Space', mods = 'CTRL', timeout_milliseconds = 1000 }
 
 
@@ -144,11 +338,32 @@ config.leader = { key = 'Space', mods = 'CTRL', timeout_milliseconds = 1000 }
 -- config.pane_select_font_size=36,
 
 
-config.colors = {
-	compose_cursor = 'orange',
+-- The ANSI palette was stock while nvim ran tokyonight, so shell output and the
+-- editor disagreed on every colour. This is the same scheme wezterm ships.
+config.color_scheme = 'tokyonight_night'
 
-	-- The color of the split lines between panes
-	split = '#5AD56A',
+config.colors = {
+	compose_cursor = ui.amber,
+
+	-- a seam, not a stripe -- still over the 3:1 WCAG wants for non-text.
+	-- Focus is carried by the dimming above, not by this line.
+	split = ui.line,
+
+	scrollbar_thumb = ui.tab,
+	cursor_bg = ui.active_fg,
+	cursor_border = ui.active_fg,
+	cursor_fg = ui.active,
+
+	tab_bar = {
+		background = ui.bar,
+		-- format-tab-title paints the tabs; these are the states it does not
+		active_tab = { bg_color = ui.active, fg_color = ui.active_fg },
+		inactive_tab = { bg_color = ui.tab, fg_color = ui.tab_fg },
+		inactive_tab_hover = { bg_color = ui.tab, fg_color = ui.active_fg },
+		new_tab = { bg_color = ui.bar, fg_color = ui.dim },
+		new_tab_hover = { bg_color = ui.tab, fg_color = ui.active_fg },
+		inactive_tab_edge = ui.bar,
+	},
 }
 
 
@@ -177,6 +392,9 @@ config.keys = {
 
 	-- LEADER w -- pick a pane
 	{ key = 'w', mods = 'LEADER', action = act.PaneSelect },
+
+	-- LEADER p -- command palette, the searchable form of all of these
+	{ key = 'p', mods = 'LEADER', action = act.ActivateCommandPalette },
 
 	-- LEADER x -- exchange with the pane picked
 	{

@@ -34,6 +34,13 @@ vim.opt.foldenable = true
 
 vim.opt.termguicolors = true
 
+-- Name the buffer in the terminal's tab, the way an editor tab names a file.
+-- The `nvim: ` prefix is a contract with wezterm/wezterm.lua, which reads it
+-- for the tab icon: under WSL every pane reports wslhost.exe, so the title is
+-- the only thing that says what is actually running in there.
+vim.opt.title = true
+vim.opt.titlestring = 'nvim: %t'
+
 -- WSL only: nvim's clipboard probe scans $PATH for every tool it misses, and
 -- the /mnt/c entries make that ~190ms of every startup. Naming the provider
 -- skips the probe (`:h g:clipboard`). Gated, because elsewhere the probe is

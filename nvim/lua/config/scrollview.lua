@@ -8,8 +8,6 @@ local excluded_filetypes = {
 	'qf',
 	'vim-plug',
 	'snacks_picker_list',
-	'DiffviewFiles',
-	'DiffviewFileHistory',
 }
 
 -- false positive: lua_ls cannot see through this module's `local M = {}`
