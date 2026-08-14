@@ -1,3 +1,23 @@
+# tokyonight_night, the palette nvim and wezterm already run, so the three
+# agree inside one window. Borders and selections come from the same tokens.
+gui:
+  theme:
+    activeBorderColor: ['#7aa2f7', bold]
+    inactiveBorderColor: ['#616a90']
+    searchingActiveBorderColor: ['#e0af68', bold]
+    optionsTextColor: ['#7aa2f7']
+    selectedLineBgColor: ['#292e42']
+    inactiveViewSelectedLineBgColor: ['#1f2335']
+    cherryPickedCommitFgColor: ['#bb9af7']
+    cherryPickedCommitBgColor: ['#292e42']
+    markedBaseCommitFgColor: ['#e0af68']
+    markedBaseCommitBgColor: ['#292e42']
+    unstagedChangesColor: ['#f7768e']
+    defaultFgColor: ['#c0caf5']
+
+  # was empty, so lazygit drew no file icons at all
+  nerdFontsVersion: '3'
+
 customCommands:
   # lazygit has <ctrl+t> everywhere but here. bin/git-treediff opens the whole
   # repo side by side, not just the changed files.

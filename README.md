@@ -184,10 +184,18 @@ It reports three things a modal, split-heavy setup otherwise hides:
 - **zoom**, since `LEADER o` hides every other pane and the count then lies
 - the **pane count**, dimmed at one pane -- true, but nothing to act on
 
-The active tab carries three cues -- accent bar, brighter text, filled glyph
--- because the tab surfaces differ by only 1.5:1 and colour alone is no cue
-for anyone who cannot separate those greys. Tabs are numbered because
-`SHIFT+CTRL+<n>` jumps to one.
+The active tab is marked by an accent bar and brighter text. The bar is a
+shape rather than a shade, because the two tab surfaces differ by only
+1.27:1 -- too little to be the only thing telling them apart. Tabs are
+numbered because `SHIFT+CTRL+<n>` jumps to one.
+
+Each tab shows an icon for what is running in it, the way an editor tab shows
+a file type. The process name is enough on Fedora and for windows-side panes,
+but every WSL pane reports `wslhost.exe`, so a program has to name itself in
+the title instead: nvim sets `titlestring = 'nvim: %t'`, and wezterm reads
+that prefix for the icon and shows the filename as the tab name. Anything
+unrecognised gets a shell icon. Every glyph used was checked with `wezterm
+ls-fonts --text` rather than assumed.
 
 Inactive panes are dimmed, which is what makes the focused one obvious and
 lets the split lines stay quiet. The new-tab and close buttons are gone; tabs
@@ -197,6 +205,20 @@ rather than a beep.
 
 `hide_tab_bar_if_only_one_tab` stays off on purpose -- leader, zoom and copied
 all report in that bar.
+
+## lazygit and yazi wear the same palette
+
+Both shipped unthemed while nvim and wezterm ran tokyonight, so three tools in
+one window disagreed on every colour. `lazygit/config.yml` and
+`yazi/theme.toml` now use the same tokens.
+
+Borders in both use a lightened `terminal_black`: the scheme's own `#414868`
+is 1.91:1 against the background, under the 3:1 WCAG asks of a meaningful
+non-text boundary. It is fine as syntax and too dark as chrome, the same
+adjustment the wezterm chrome makes.
+
+lazygit's `nerdFontsVersion` was empty, which means it drew no file icons at
+all; it is `'3'` now, matching the glyph range the rest of these configs use.
 
 ## kdiff3 as the merge and difftool
 

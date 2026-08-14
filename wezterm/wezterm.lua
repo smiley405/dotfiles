@@ -92,7 +92,11 @@ wezterm.on('update-status', function(window, pane)
 
 	-- Zoom hides every other pane, so the count alone reads as a lie.
 	-- panes_with_info has both; there is no is_zoomed() on a pane.
-	local infos = tab:panes_with_info()
+	-- pcall: a tab torn down between pane:tab() and here raises "tab id 0 not
+	-- found in mux". Rare, and only ever on the way out, but it is one stray
+	-- error per closing window otherwise.
+	local ok, infos = pcall(function() return tab:panes_with_info() end)
+	if not ok then return end
 	local panes, zoomed = #infos, false
 	for _, info in ipairs(infos) do
 		if info.is_zoomed then zoomed = true end
@@ -126,27 +130,59 @@ local function tab_title(tab_info)
 	return tab_info.active_pane.title
 end
 
+-- An editor tab says what is in it; a terminal tab can too. Glyph names are
+-- from `wezterm ls-fonts --text`, so every one of these resolves.
+local PROGRAM_ICONS = {
+	nvim = '\u{e62b}',
+	vim = '\u{e62b}',
+	lazygit = '\u{e702}',
+	git = '\u{e702}',
+	yazi = '\u{f07c}',
+	node = '\u{e718}',
+	npm = '\u{e718}',
+	python = '\u{e73c}',
+	python3 = '\u{e73c}',
+	docker = '\u{e7b0}',
+}
+local SHELL_ICON = '\u{ebca}'
+
+-- Returns the program and, when the title carried it, the name to show.
+local function tab_program(tab)
+	local pane = tab.active_pane
+	local proc = ((pane.foreground_process_name or ''):lower():match('[^\\/]+$') or '')
+		:gsub('%.exe$', '')
+	if PROGRAM_ICONS[proc] then return proc, nil end
+
+	-- Every WSL pane reports wslhost.exe, so the process says nothing there and
+	-- the program names itself in the title instead -- see nvim's titlestring
+	-- in nvim/lua/config/_default.lua.
+	local name, rest = (pane.title or ''):match('^(%a+): (.+)$')
+	if name and PROGRAM_ICONS[name:lower()] then return name:lower(), rest end
+	return nil, nil
+end
+
 wezterm.on(
 'format-tab-title',
 function(tab, tabs, panes, config, hover, max_width)
 	local background = ui.tab
 	local foreground = ui.tab_fg
-	-- Three cues, not one: the tab surfaces differ by only 1.5:1, so colour
-	-- alone is no cue for anyone who cannot separate those greys.
+	-- The accent bar is a shape, not a shade: the tab surfaces differ by only
+	-- 1.27:1, too little to be the only thing telling them apart.
 	local edge = ' '
-	local icon = '\u{f09db} '
 
 	if tab.is_active then
 		background = ui.active
 		foreground = ui.active_fg
 		edge = '\u{258e}'
-		icon = '\u{f09da} '
 	elseif hover then
 		foreground = ui.active_fg
 	end
 
+	local program, named = tab_program(tab)
+	local icon = (program and PROGRAM_ICONS[program] or SHELL_ICON) .. ' '
+
 	-- numbered because SHIFT+CTRL+<n> jumps to a tab
-	local title = wezterm.truncate_right(tab_title(tab), max_width - 6)
+	local title = wezterm.truncate_right(named or tab_title(tab), max_width - 6)
 
 	return {
 		{ Background = { Color = background } },
