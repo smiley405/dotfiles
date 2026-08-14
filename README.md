@@ -148,6 +148,22 @@ xclip outright: autodetection scans `$PATH` for every tool it misses, and the
 `/mnt/c` entries make that ~190ms of each startup. `:checkhealth vim.provider`
 shows which was picked.
 
+Selecting text flashes a blue `copied` chip for a second or two. wezterm fires
+no event when the clipboard is written, so `wezterm/wezterm.lua` hangs the chip
+off the three bindings that finish a selection -- drag, double click, triple
+click -- keeping their stock `ClipboardAndPrimarySelection`. The chip draws in
+the tab bar, hence `tab_bar_at_bottom`; flip it to move both back up.
+
+It is built to survive wezterm updates. Right status is only ever written from
+this config, so a wezterm that ships its own indicator sits alongside rather
+than fighting it. The bindings go through `pcall`, because naming a dropped
+action raises as the config loads and would take the leader table with it --
+instead that click falls back to wezterm's default, so the copy still happens.
+
+`wezterm.gui` has no accessor for default *mouse* bindings, so the clipboard
+argument is pinned by hand. To recheck it against a nightly, diff `wezterm
+show-keys` against the same run over a `return {}` config.
+
 ## kdiff3 as the merge and difftool
 
 Optional. The draw is the three-way merge -- a middle pane carrying the base

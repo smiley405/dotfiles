@@ -14,9 +14,51 @@ if wezterm.config_builder then
 end
 
 
+-- A "copied" chip on selection. wezterm fires no event when the clipboard is
+-- written, so the selection bindings raise it themselves. update-status ticks
+-- once a second, so the chip lives one to two.
+local COPIED_TOAST_SECONDS = 2
+local copied_at = nil
+
+-- wezterm.gui exposes no default *mouse* bindings to read this back from, so it
+-- is pinned to what `wezterm show-keys` reports. Recheck after a nightly bump.
+local COMPLETE_SELECTION = 'ClipboardAndPrimarySelection'
+
+local function draw_copied(window)
+	local lit = copied_at ~= nil and os.time() - copied_at < COPIED_TOAST_SECONDS
+	if not lit then copied_at = nil end
+	-- pcall so a reworked status API costs the chip and nothing around it
+	pcall(function()
+		window:set_right_status(lit and wezterm.format {
+			{ Background = { Color = '#2F6FEB' } },
+			{ Foreground = { Color = '#FFFFFF' } },
+			{ Text = ' \u{f018f} copied ' },
+		} or '')
+	end)
+end
+
+-- Read the selection before the action runs. An empty one earns no chip: a bare
+-- click completes a selection too, and that is a click, not a copy.
+local function copy_and_say(action)
+	return wezterm.action_callback(function(window, pane)
+		local ok, selection = pcall(function()
+			return window:get_selection_text_for_pane(pane)
+		end)
+		-- outside the pcall and unconditional: the copy never depends on the chip
+		window:perform_action(action, pane)
+		if ok and selection and #selection > 0 then
+			copied_at = os.time()
+			draw_copied(window)
+		end
+	end)
+end
+
+
 -- status bar
 wezterm.on('update-status', function(window, pane)
 	-- "Wed Mar 3 08:14"
+	-- ahead of the early returns: the chip must expire even in a tabless pane
+	draw_copied(window)
 	if not pane then return end
 	local tab = pane:tab()
 	-- panes such as the debug overlay aren't attached to a tab
@@ -82,6 +124,10 @@ config.check_for_updates = false
 -- something like that in other tui app's config settings
 config.enable_scroll_bar = true
 
+-- The chip draws in the tab bar, and the prompt and nvim's statusline are
+-- already at the bottom, so that is the shorter look. Flip to move both up.
+config.tab_bar_at_bottom = true
+
 -- On Windows, start straight in WSL Ubuntu instead of cmd.exe. Everywhere else
 -- (linux/macos) this is a no-op and the native login shell is used.
 if wezterm.target_triple:find('windows') then
@@ -132,6 +178,37 @@ local function tab_like_parent()
 		window:perform_action(act.SpawnTab(parent_domain(pane)), pane)
 	end)
 end
+
+-- The three ways a left button finishes a selection: drag, double click, triple
+-- click. Stock bindings with copy_and_say wrapped round them; the rest of the
+-- mouse keeps wezterm's defaults, which merge in around these.
+--
+-- Built behind pcall, not as a literal: naming an action a future wezterm has
+-- dropped raises as this file loads, taking the leader table with it. Skipping
+-- one restores wezterm's default, so the copy survives and only the chip goes.
+local selection_bindings = {}
+
+local function add_selection_binding(streak, build)
+	local ok, action = pcall(build)
+	if not ok then
+		wezterm.log_warn('copied chip: no selection action for streak '
+			.. streak .. ', leaving that click on its default')
+		return
+	end
+	table.insert(selection_bindings, {
+		event = { Up = { streak = streak, button = 'Left' } },
+		mods = 'NONE',
+		action = copy_and_say(action),
+	})
+end
+
+add_selection_binding(1, function()
+	return act.CompleteSelectionOrOpenLinkAtMouseCursor(COMPLETE_SELECTION)
+end)
+add_selection_binding(2, function() return act.CompleteSelection(COMPLETE_SELECTION) end)
+add_selection_binding(3, function() return act.CompleteSelection(COMPLETE_SELECTION) end)
+
+config.mouse_bindings = selection_bindings
 
 config.leader = { key = 'Space', mods = 'CTRL', timeout_milliseconds = 1000 }
 
