@@ -14,20 +14,21 @@ if wezterm.config_builder then
 end
 
 
--- One palette for all the chrome. Every colour is WCAG AA on its own surface;
--- the old inactive-tab grey was 4.00:1, under the 4.5 body text needs.
+-- Chrome from tokyonight_night, the scheme nvim runs, so terminal, editor and
+-- bar are one palette. comment (2.91:1) and terminal_black (1.91:1) are
+-- lightened: fine as syntax, too dark as UI. AA on every surface, 3:1 non-text.
 local ui = {
-	bar = '#16181D',       -- the tab bar itself
-	tab = '#26292F',       -- an inactive tab, a shade up from the bar
-	tab_fg = '#8E93A6',    -- 4.77:1 on tab
-	active = '#000000',    -- active tab, same black as the terminal
-	active_fg = '#C9CCDA', -- 13.13:1 on active
-	status = '#A6ADBA',    -- 7.87:1 on bar
-	dim = '#80869B',       -- 4.91:1 on bar
-	line = '#5C6273',      -- split lines, 3.45:1 -- WCAG 1.4.11 for non-text
-	blue = '#4C8DF6',      -- transient success (copied)
-	amber = '#E5A44C',     -- a mode is armed (leader, zoom)
-	ink = '#0B1220',       -- text on blue/amber, 5.75:1 and 8.60:1
+	bar = '#16161E',       -- bg_dark, one step under the terminal
+	tab = '#292E42',       -- bg_highlight, an inactive tab
+	tab_fg = '#A9B1D6',    -- fg_dark, 6.36:1 on tab
+	active = '#1A1B26',    -- the terminal's own bg: the tab joins its content
+	active_fg = '#C0CAF5', -- fg, 10.59:1 on active
+	status = '#A9B1D6',    -- 8.52:1 on bar
+	dim = '#7982AB',       -- comment, lightened to clear 4.79:1 on bar
+	line = '#616A90',      -- terminal_black, lightened to 3.23:1 on the terminal
+	blue = '#7AA2F7',      -- transient success (copied)
+	amber = '#E0AF68',     -- a mode is armed (leader, zoom)
+	ink = '#1A1B26',       -- text on blue/amber, 6.79:1 and 8.55:1
 }
 
 -- A "copied" chip on selection. wezterm fires no event when the clipboard is
@@ -183,6 +184,9 @@ config.inactive_pane_hsb = { saturation = 0.85, brightness = 0.65 }
 
 config.window_padding = { left = 10, right = 10, top = 6, bottom = 4 }
 
+-- a little air between rows; long log output is what this is for
+config.line_height = 1.1
+
 -- a cursor tint says the same as a beep, without the jolt
 config.audible_bell = 'Disabled'
 config.visual_bell = {
@@ -293,6 +297,10 @@ config.leader = { key = 'Space', mods = 'CTRL', timeout_milliseconds = 1000 }
 -- config.pane_select_font_size=36,
 
 
+-- The ANSI palette was stock while nvim ran tokyonight, so shell output and the
+-- editor disagreed on every colour. This is the same scheme wezterm ships.
+config.color_scheme = 'tokyonight_night'
+
 config.colors = {
 	compose_cursor = ui.amber,
 
@@ -301,6 +309,9 @@ config.colors = {
 	split = ui.line,
 
 	scrollbar_thumb = ui.tab,
+	cursor_bg = ui.active_fg,
+	cursor_border = ui.active_fg,
+	cursor_fg = ui.active,
 
 	tab_bar = {
 		background = ui.bar,

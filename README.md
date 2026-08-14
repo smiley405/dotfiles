@@ -165,9 +165,14 @@ show-keys` against the same run over a `return {}` config.
 
 ## The wezterm UI
 
-One palette at the top of `wezterm/wezterm.lua` feeds every piece of chrome.
-Each colour clears WCAG AA on its own surface; the inactive tab text used to
-be 4.00:1, under the 4.5 body text needs.
+wezterm runs `tokyonight_night`, the same scheme as nvim. The ANSI palette was
+stock before, so shell output and the editor disagreed on every colour.
+
+The chrome at the top of `wezterm/wezterm.lua` derives from that same palette,
+so terminal, editor and tab bar are one system. Two tokens are lightened for
+UI duty -- `comment` at 2.91:1 and `terminal_black` at 1.91:1 are fine as
+syntax and too dark as chrome. Every colour clears WCAG AA on the surface it
+sits on, 3:1 for non-text.
 
 The tab bar stays at the **top**, because every overlay -- tab navigator,
 `PaneSelect`, command palette -- opens from the top of the pane, and a bottom
