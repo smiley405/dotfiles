@@ -42,8 +42,6 @@ vim.cmd([[
 	nnoremap <silent> <leader>to :.+1,$tabdo :tabc<CR>
 	nnoremap <silent> <leader>tO :.-1,1tabdo :tabc<CR>
 	nnoremap <silent> <leader>r :set relativenumber!<CR>
-	" search pattern and add it quick fix list ie. :vimgrep /pattern/ % | copen
-	nnoremap <silent> <leader>fs :vimgrep // % <bar> copen<Left><Left><Left><Left><Left><Left><Left><Left><Left><Left><Left><C-n>
 
 	" return to previous tab on close
 	augroup tabc-behaviour

@@ -44,18 +44,22 @@ wk.add({
 	{ '<leader>to', desc = 'Close tabs to the right' },
 	{ '<leader>tO', desc = 'Close tabs to the left' },
 
-	-- config/fzf.lua
+	-- config/telescope.lua
 	{ '<leader>ff', desc = 'Files' },
 	{ '<leader>fb', desc = 'Buffers' },
 	{ '<leader>fw', desc = 'Windows' },
 	{ '<leader>fj', desc = 'Jumps' },
 	{ '<leader>fm', desc = 'Marks' },
-	{ '<leader>fg', desc = 'Grep (ripgrep)' },
-	-- config/keymap.lua, grouped with the other searches
-	{ '<leader>fs', desc = 'Search in file -> quickfix' },
+	{ '<leader>fg', desc = 'Search panel (grug-far)',       mode = { 'n', 'x' } },
+	{ '<leader>fs', desc = 'Search in this file' },
+	{ '<leader>fp', desc = 'Projects (recent)' },
+	{ '<leader>fl', desc = 'Resume last picker' },
+
+	-- config/commands.lua
+	{ '<leader>m',  desc = 'Command palette' },
 
 	-- config/rooter.lua, config/qf.lua
-	{ '<leader>a',  desc = 'Toggle rooter (auto cwd)' },
+	{ '<leader>a',  desc = 'Set scope (cwd) to an ancestor' },
 	-- <leader>q is labelled in config/qf.lua, next to the mapping itself
 
 	-- config/flash.lua

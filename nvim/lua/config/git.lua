@@ -30,8 +30,8 @@ gs.setup({
 })
 
 -- Above the hunk, git belongs to lazygit; conflicts to meld. No plugin for
--- either -- a terminal tab is enough. Commands, not just keymaps, so
--- config/menu.lua calls these instead of repeating them.
+-- either -- a terminal tab is enough. Commands, not just keymaps, so they
+-- show up in the <leader>m palette (config/commands.lua) too.
 
 -- A checkout or stash pop under a running nvim leaves stale buffers, hence
 -- the checktime on the way out.

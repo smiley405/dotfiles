@@ -22,8 +22,8 @@ snacks.setup({
 	-- floating vim.ui.input, used by <leader>vrn (rename)
 	input = { enabled = true },
 
-	-- vim.ui.select, used by <space>ca (code action). ui_select hook only --
-	-- fzf.vim still handles file/grep search.
+	-- vim.ui.select, used by <space>ca (code action) and the <leader>a scope
+	-- picker. ui_select hook only -- telescope and grug-far do the searching.
 	picker = { enabled = true, ui_select = true },
 
 	notifier = {

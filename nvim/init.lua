@@ -24,12 +24,13 @@ local eager = {
 
 -- Loaded on the next tick. Order within the list is preserved.
 local deferred = {
-	'menu',
+	'commands',
 	'autopairs',
 	-- ahead of 'lsp': puts cmp-nvim-lsp on 'runtimepath' for default_capabilities()
 	'completion',
 	'comment',
-	'fzf',
+	'telescope',
+	'grugfar',
 	'qf',
 	'flash',
 	'scrollview',
