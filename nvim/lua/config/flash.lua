@@ -1,5 +1,5 @@
--- Replaces hop.nvim: flash routes jumps through 'operatorfunc', so f/F/t/T stay
--- real motions -- `df<char>` is dot-repeatable and `;`/`,` still repeat.
+-- Jumps route through 'operatorfunc', so f/F/t/T stay real motions --
+-- `df<char>` is dot-repeatable and `;`/`,` still repeat.
 --
 -- The maps below are global, so buffer-local ones still win (netrw keeps t).
 require('flash').setup({
