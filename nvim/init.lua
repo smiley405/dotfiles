@@ -28,6 +28,7 @@ local deferred = {
 	'autopairs',
 	-- ahead of 'lsp': puts cmp-nvim-lsp on 'runtimepath' for default_capabilities()
 	'completion',
+	'treesitter',
 	'comment',
 	'conform',
 	'telescope',

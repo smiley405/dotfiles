@@ -74,14 +74,9 @@ wk.add({
 	{ ';',          desc = 'Repeat flash char motion' },
 	{ ',',          desc = 'Repeat flash char motion (reverse)' },
 
-	-- Comment.nvim (config/comment.lua -- default mappings)
-	{ 'gc',         desc = 'Comment (linewise)',                mode = { 'n', 'x' } },
-	{ 'gb',         desc = 'Comment (blockwise)',               mode = { 'n', 'x' } },
+	-- built-in commenting (config/comment.lua sets the odd commentstring)
+	{ 'gc',         desc = 'Comment (operator)',                mode = { 'n', 'x', 'o' } },
 	{ 'gcc',        desc = 'Toggle comment line' },
-	{ 'gbc',        desc = 'Toggle comment block' },
-	{ 'gco',        desc = 'Comment line below' },
-	{ 'gcO',        desc = 'Comment line above' },
-	{ 'gcA',        desc = 'Comment at end of line' },
 
 	-- built-ins worth labelling
 	{ '-',          desc = 'Open parent directory (netrw)' },

@@ -20,6 +20,10 @@ Plug 'justinmk/vim-gtfo'
 
 -- nvim utils
 Plug 'nvim-lua/plenary.nvim'
+-- parsers only; nvim 0.12 does highlighting and context-aware commentstring
+-- itself. master is frozen, main is the 0.12-compatible rewrite. Needs the
+-- tree-sitter CLI on PATH to build.
+Plug('nvim-treesitter/nvim-treesitter', { branch = 'main', ['do'] = ':TSUpdate' })
 -- fuzzy finder; needs plenary above
 Plug 'nvim-telescope/telescope.nvim'
 -- C matcher, the only thing here that compiles. Loaded under pcall, so a failed
@@ -35,7 +39,6 @@ Plug 'windwp/nvim-autopairs'
 -- maintained fork; upstream norcalli/ still calls vim.tbl_flatten (gone in 0.13)
 Plug 'catgoose/nvim-colorizer.lua'
 Plug 'lewis6991/gitsigns.nvim'
-Plug 'numToStr/Comment.nvim'
 Plug 'kevinhwang91/nvim-bqf'
 -- search/replace panel: rg args as editable buffer lines. Needs rg 14+.
 Plug 'MagicDuck/grug-far.nvim'
