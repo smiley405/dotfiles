@@ -5,14 +5,11 @@
 --
 -- Needs the tree-sitter CLI on PATH (see install.sh / install.ps1). Without it
 -- nothing is built and nvim falls back to its own syntax files.
-local ok, ts = pcall(require, 'nvim-treesitter')
-if not ok then
-	vim.notify('nvim-treesitter missing - run :PlugInstall', vim.log.levels.WARN)
-	return
-end
+local ts = require('nvim-treesitter')
 
--- c, lua, markdown, query, vim and vimdoc ship with nvim already. No haxe or
--- jsonc grammar exists upstream, so those keep nvim's syntax files.
+-- c, lua, markdown, query, vim and vimdoc ship with nvim already. jsonc is not
+-- listed because nvim-treesitter aliases it onto the json parser. Haxe has no
+-- grammar upstream, so it keeps nvim's syntax file.
 local parsers = {
 	'bash', 'css', 'gdscript', 'html', 'javascript', 'json', 'python',
 	'toml', 'tsx', 'typescript', 'vue', 'yaml',

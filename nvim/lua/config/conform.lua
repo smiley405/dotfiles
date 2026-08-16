@@ -1,8 +1,4 @@
-local ok, conform = pcall(require, 'conform')
-if not ok then
-	vim.notify('conform.nvim missing - run :PlugInstall', vim.log.levels.WARN)
-	return
-end
+local conform = require('conform')
 
 -- Resolves the project's own node_modules/.bin/biome and anchors to its
 -- biome.json, so a repo's configured indent and quote style win over whatever

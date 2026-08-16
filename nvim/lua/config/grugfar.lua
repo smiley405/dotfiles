@@ -1,11 +1,7 @@
 -- Search / Replace / Files Filter / Flags / Paths as editable buffer lines, rg
 -- re-running as you change any of them. <enter> gotos, <up>/<down> preview,
 -- \i floats a preview, \q sends to quickfix.
-local ok, grug = pcall(require, 'grug-far')
-if not ok then
-	vim.notify('grug-far.nvim missing - run :PlugInstall', vim.log.levels.WARN)
-	return
-end
+local grug = require('grug-far')
 
 -- Prefilled rather than baked into extraArgs, so both stay visible and editable.
 -- The old <leader>fg typed these onto the cmdline as -g "!{...}" and -S.

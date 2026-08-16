@@ -1,10 +1,6 @@
 -- Used only for the cmdline and LSP popups. Ordinary vim messages are left
 -- alone (messages.enabled = false); vim.notify() still renders as a toast.
-local ok_noice, noice = pcall(require, 'noice')
-if not ok_noice then
-	vim.notify('noice.nvim missing - run :PlugInstall', vim.log.levels.WARN)
-	return
-end
+local noice = require('noice')
 
 -- toasts render through the snacks notifier (config/snacks.lua)
 

@@ -1,11 +1,7 @@
 -- Collection of independent modules, all off by default; only the ones below
 -- are enabled. Must load before config/noice.lua -- noice picks the snacks
 -- notifier as its toast backend when it is available.
-local ok, snacks = pcall(require, 'snacks')
-if not ok then
-	vim.notify('snacks.nvim missing - run :PlugInstall', vim.log.levels.WARN)
-	return
-end
+local snacks = require('snacks')
 
 snacks.setup({
 	indent = {

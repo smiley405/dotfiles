@@ -1,10 +1,6 @@
 -- Auto-cd to the project root, plus a cached project history with a telescope
 -- picker -- what makes a monorepo of sibling apps navigable.
-local ok, rooter = pcall(require, 'rooter')
-if not ok then
-	vim.notify('rooter.nvim missing - run :PlugInstall', vim.log.levels.WARN)
-	return
-end
+local rooter = require('rooter')
 
 -- trailing slash = must be a directory
 local root_patterns = {

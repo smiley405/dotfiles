@@ -13,7 +13,6 @@ local cmp = require('cmp')
 local luasnip = require('luasnip')
 local compare = require('cmp.config.compare')
 
-require('luasnip.loaders.from_lua').lazy_load()
 require('luasnip.loaders.from_vscode').lazy_load()
 
 -- noinsert: first entry is preselected, but nothing is written until confirm
@@ -328,13 +327,5 @@ cmp.setup.cmdline({ '/', '?' }, {
 	}
 })
 
--- cmdline + path source for `:`
----@diagnostic disable-next-line: undefined-field
-cmp.setup.cmdline(':', {
-	mapping = cmp.mapping.preset.cmdline(),
-	sources = cmp.config.sources({
-		{ name = 'path' }
-	}, {
-		{ name = 'cmdline' }
-	})
-})
+-- `:` is left to the native wildmenu: 'wildoptions' already includes pum, and
+-- noice renders that through the popupmenu view configured in config/noice.lua.

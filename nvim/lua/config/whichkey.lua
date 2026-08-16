@@ -4,11 +4,7 @@
 --
 -- vim.keymap.set mappings with a `desc` are picked up automatically; only
 -- vimscript ones (no desc field) need an entry here.
-local ok, wk = pcall(require, 'which-key')
-if not ok then
-	vim.notify('which-key.nvim missing - run :PlugInstall', vim.log.levels.WARN)
-	return
-end
+local wk = require('which-key')
 
 wk.setup({
 	preset = 'classic',
@@ -44,28 +40,7 @@ wk.add({
 	{ '<leader>to', desc = 'Close tabs to the right' },
 	{ '<leader>tO', desc = 'Close tabs to the left' },
 
-	-- config/telescope.lua
-	{ '<leader>ff', desc = 'Files' },
-	{ '<leader>fb', desc = 'Buffers' },
-	{ '<leader>fw', desc = 'Windows' },
-	{ '<leader>fj', desc = 'Jumps' },
-	{ '<leader>fm', desc = 'Marks' },
-	{ '<leader>fg', desc = 'Search panel (grug-far)',       mode = { 'n', 'x' } },
-	{ '<leader>fs', desc = 'Search in this file' },
-	{ '<leader>fp', desc = 'Projects (recent)' },
-	{ '<leader>fl', desc = 'Resume last picker' },
-
-	-- config/commands.lua
-	{ '<leader>m',  desc = 'Command palette' },
-
-	-- config/rooter.lua, config/qf.lua
-	{ '<leader>a',  desc = 'Set scope (cwd) to an ancestor' },
-	-- <leader>q is labelled in config/qf.lua, next to the mapping itself
-
-	-- config/flash.lua
-	{ '<leader>s',  desc = 'Flash to char',                     mode = { 'n', 'x', 'o' } },
-	{ '<leader>w',  desc = 'Flash to word',                     mode = { 'n', 'x', 'o' } },
-	{ '<leader>S',  desc = 'Flash to line',                     mode = { 'n', 'x', 'o' } },
+	-- config/flash.lua -- the <leader> jumps carry their own desc; these do not
 	{ 'f',          desc = 'Flash char forward (line)',         mode = { 'n', 'x', 'o' } },
 	{ 'F',          desc = 'Flash char backward (line)',        mode = { 'n', 'x', 'o' } },
 	{ 't',          desc = 'Flash till char forward (line)',    mode = { 'n', 'x', 'o' } },
@@ -73,10 +48,6 @@ wk.add({
 	-- flash keeps these working as repeat-last-char-motion
 	{ ';',          desc = 'Repeat flash char motion' },
 	{ ',',          desc = 'Repeat flash char motion (reverse)' },
-
-	-- built-in commenting (config/comment.lua sets the odd commentstring)
-	{ 'gc',         desc = 'Comment (operator)',                mode = { 'n', 'x', 'o' } },
-	{ 'gcc',        desc = 'Toggle comment line' },
 
 	-- built-ins worth labelling
 	{ '-',          desc = 'Open parent directory (netrw)' },

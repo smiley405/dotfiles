@@ -1,10 +1,6 @@
 -- Pickers for files, buffers, windows, jumps and marks. Grep is deliberately
 -- absent -- that is config/grugfar.lua, which owns the glob exclusion list.
-local ok, telescope = pcall(require, 'telescope')
-if not ok then
-	vim.notify('telescope.nvim missing - run :PlugInstall', vim.log.levels.WARN)
-	return
-end
+local telescope = require('telescope')
 
 local actions = require('telescope.actions')
 local builtin = require('telescope.builtin')

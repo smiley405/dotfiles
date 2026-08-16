@@ -1,10 +1,6 @@
 -- Restricts repeated hjkl/arrows to build better motion habits. Maps globally,
 -- so a plugin's own buffer-local hjkl still wins.
-local ok, hardtime = pcall(require, 'hardtime')
-if not ok then
-	vim.notify('hardtime.nvim missing - run :PlugInstall', vim.log.levels.WARN)
-	return
-end
+local hardtime = require('hardtime')
 
 hardtime.setup({
 	-- plugin default is 3
@@ -23,11 +19,6 @@ hardtime.setup({
 	-- names a better motion after a repeated run; `:Hardtime report` ranks them
 	hint = true,
 	notification = true,
-
-	restricted_keys = {
-		-- was in g:list_of_normal_keys, not a plugin default
-		['-'] = { 'n', 'x' },
-	},
 
 	-- Blocked, not throttled: an arrow allowed twice a second is still an arrow.
 	-- Normal/visual only -- config/cmp.lua binds <Up>/<Down> to the completion

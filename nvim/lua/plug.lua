@@ -16,7 +16,6 @@ Plug 'tpope/vim-surround'
 Plug 'tpope/vim-repeat'
 -- No Haxe syntax plugin here: .hx highlighting comes from haxe_language_server
 -- alone, and .hxsl/.hxml have no filetype at all.
-Plug 'justinmk/vim-gtfo'
 
 -- nvim utils
 Plug 'nvim-lua/plenary.nvim'
