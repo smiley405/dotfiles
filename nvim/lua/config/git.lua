@@ -2,7 +2,6 @@ local gs = require('gitsigns')
 
 gs.setup({
 	current_line_blame = true,
-	--current_line_blame_formatter = '<author>, <committer_time:%R>, <author_time:%Y-%m-%d> - <summary>',
 	current_line_blame_formatter = '<author>, <author_time:%R> • <summary>',
 	on_attach = function(bufnr)
 		local function map(mode, l, r, opts)
