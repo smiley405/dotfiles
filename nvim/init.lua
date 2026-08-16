@@ -29,6 +29,7 @@ local deferred = {
 	-- ahead of 'lsp': puts cmp-nvim-lsp on 'runtimepath' for default_capabilities()
 	'completion',
 	'comment',
+	'conform',
 	'telescope',
 	'grugfar',
 	'qf',

@@ -82,7 +82,7 @@ Plug('saadparwaiz1/cmp_luasnip', lazy)
 -- data only, but must be in 'runtimepath' for luasnip's from_vscode loader
 Plug('rafamadriz/friendly-snippets', lazy)
 
--- formatter
-Plug 'sbdchd/neoformat'
+-- formatter; runs the project's own binary and falls back to the LSP
+Plug 'stevearc/conform.nvim'
 
 vim.call('plug#end')
