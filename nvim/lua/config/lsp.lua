@@ -1,5 +1,3 @@
--- see the following like to setup lsp
--- https://lsp-zero.netlify.app/docs/getting-started.html
 local uv = vim.uv ---@type table
 local enable_haxe_lsp = true
 local enable_vue_lsp = true
@@ -11,7 +9,8 @@ local servers = {
 	'eslint',
 	'jsonls',
 	'lua_ls',
-	'vue_ls'
+	'vue_ls',
+	'tailwindcss',
 	--'gdscript',
 }
 
@@ -22,13 +21,10 @@ vim.api.nvim_create_autocmd('LspAttach', {
 	desc = 'LSP actions',
 	callback = function(event)
 		local opts = { buffer = event.buf, remap = false }
-		-- `desc` is what which-key shows for these in its popup
 		local function map(lhs, rhs, desc)
 			vim.keymap.set('n', lhs, rhs, vim.tbl_extend('force', opts, { desc = desc }))
 		end
 
-		-- Mappings.
-		-- See `:help vim.lsp.*` for documentation on any of the below functions
 		map('<leader>e', '<cmd>lua vim.diagnostic.open_float()<cr>', 'Diagnostics (float)')
 		-- goto_prev/goto_next are gone in 0.13; jump() takes a count instead
 		map('[d', function() vim.diagnostic.jump({ count = -1 }) end, 'Previous diagnostic')
@@ -39,7 +35,6 @@ vim.api.nvim_create_autocmd('LspAttach', {
 		map('K', function() vim.lsp.buf.hover({ border = 'rounded' }) end, 'Hover docs')
 		map('<space>ca', '<cmd>lua vim.lsp.buf.code_action()<cr>', 'Code action')
 		map('gr', '<cmd>lua vim.lsp.buf.references()<cr>', 'References')
-		-- Enable completion triggered by <c-x><c-o>
 		vim.api.nvim_set_option_value('omnifunc', 'v:lua.vim.lsp.omnifunc', { buf = opts.buffer })
 	end,
 })
@@ -119,18 +114,11 @@ vim.lsp.config('lua_ls', {
 	settings = {
 		Lua = {
 			runtime = {
-				-- Tell the language server which version of Lua you're using
-				-- (most likely LuaJIT in the case of Neovim)
 				version = 'LuaJIT',
 			},
 			diagnostics = {
-				-- Get the language server to recognize the `vim` global
-				globals = {
-					'vim',
-					'require'
-				},
+				globals = { 'vim' },
 			},
-			-- Do not send telemetry data containing a randomized but unique identifier
 			telemetry = {
 				enable = false,
 			},
@@ -141,16 +129,9 @@ vim.lsp.config('lua_ls', {
 vim.lsp.enable('lua_ls')
 
 if enable_haxe_lsp then
-	-- for haxe: since there is an issue with Mason::
-	-- manually copy the haxe_language_server extension from vscode
-	-- add it .vim/vshaxe folder and point it cmd = {...}
-	-- and remember haxe projects needs build.hxml
-	-- https://community.openfl.org/t/build-openfl-with-hxml-config/9546
-	-- https://community.haxe.org/t/neovim-lsp-having-issues-setting-up-haxe-lsp-with-neovim/3623/3
-	-- https://github.com/neovim/nvim-lspconfig/blob/master/doc/server_configurations.md#haxe_language_server
-	--
-	-- on each vscode vshaxe update/release change the version here aswell
-	-- local haxe_server_path = vim.env.HOME .. '/.vscode-oss/extensions/nadako.vshaxe-2.31.0-universal/bin/server.js'
+	-- Mason does not ship this: copy vshaxe's server.js out of the VSCode
+	-- extension into ~/.vim/vshaxe, and re-copy on each vshaxe release. Haxe
+	-- projects also need a build.hxml.
 	local haxe_server_path = vim.env.HOME .. '/.vim/vshaxe/bin/server.js'
 
 	if uv.fs_access(haxe_server_path, 'r') then
@@ -197,8 +178,7 @@ if enable_haxe_lsp then
 end
 
 if enable_vue_lsp then
-	-- @see https://kosu.me/blog/vue-nvim-lsp-config
-	-- https://github.com/mason-org/mason.nvim/blob/main/CHANGELOG.md#packageget_install_path-has-been-removed
+	-- $MASON expansion: mason removed get_install_path()
 	local vue_language_server_path = vim.fn.expand(
 		'$MASON/packages/vue-language-server/node_modules/@vue/language-server')
 

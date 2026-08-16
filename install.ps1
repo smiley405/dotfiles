@@ -182,13 +182,16 @@ if ($includes -contains $difftoolConf) {
 }
 
 Write-Host 'dotfiles: dependencies'
-foreach ($tool in 'nvim', 'yazi', 'lazygit', 'rg', 'fd', 'jq', 'wezterm', 'pwsh', 'meld') {
+foreach ($tool in 'nvim', 'yazi', 'lazygit', 'rg', 'fd', 'jq', 'wezterm', 'pwsh', 'meld', 'tree-sitter') {
 	if (Get-Command $tool -ErrorAction SilentlyContinue) {
 		Info "ok      $tool"
 	} elseif ($tool -eq 'pwsh') {
 		Info "note    pwsh not found -- falling back to windows powershell 5.1"
 	} elseif ($tool -eq 'meld') {
 		Info "note    meld not found -- optional, but folder diffs and merges need it"
+	} elseif ($tool -eq 'tree-sitter') {
+		Info "note    tree-sitter not found -- nvim falls back to its own syntax files;"
+		Info "        grab the CLI from github.com/tree-sitter/tree-sitter/releases"
 	} else {
 		Info "MISSING $tool"
 	}

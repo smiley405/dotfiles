@@ -112,13 +112,16 @@ else
 fi
 
 printf 'dotfiles: dependencies\n'
-for tool in nvim yazi lazygit rg fd jq wezterm meld; do
+for tool in nvim yazi lazygit rg fd jq wezterm meld tree-sitter; do
 	if command -v "$tool" >/dev/null 2>&1; then
 		info "ok      $tool"
 	elif [ "$tool" = wezterm ] && command -v wezterm.exe >/dev/null 2>&1; then
 		info "ok      wezterm (wezterm.exe via WSL interop)"
 	elif [ "$tool" = meld ]; then
 		info "note    meld not found -- optional, but folder diffs and merges need it"
+	elif [ "$tool" = tree-sitter ]; then
+		info "note    tree-sitter not found -- nvim falls back to its own syntax files;"
+		info "        grab the CLI from github.com/tree-sitter/tree-sitter/releases"
 	else
 		info "MISSING $tool"
 	fi

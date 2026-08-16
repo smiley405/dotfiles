@@ -13,13 +13,10 @@ vim.o.formatoptions = 'jcroql'
 vim.opt.ts = 4
 vim.opt.sw = 4
 vim.opt.re = 0
--- vim.opt.cursorline = true
 
 vim.opt.backupdir = vim.fn.expand('~/.vim/backup')
 vim.opt.directory = vim.fn.expand('~/.vim/swp')
--- vim.opt.shadafile = 'NONE'
 
--- Some servers have issues with backup files, see #649.
 vim.opt.backup = false
 vim.opt.writebackup = false
 
@@ -52,7 +49,6 @@ if vim.fn.has('wsl') == 1
 	vim.g.clipboard = 'xclip'
 end
 
--- Use the system clipboard for normal yank/paste
 vim.opt.clipboard = "unnamedplus"
 
 vim.cmd([[

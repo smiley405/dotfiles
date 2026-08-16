@@ -24,15 +24,18 @@ local eager = {
 
 -- Loaded on the next tick. Order within the list is preserved.
 local deferred = {
-	'menu',
+	'commands',
 	'autopairs',
 	-- ahead of 'lsp': puts cmp-nvim-lsp on 'runtimepath' for default_capabilities()
 	'completion',
+	'treesitter',
 	'comment',
-	'fzf',
+	'conform',
+	'telescope',
+	'grugfar',
 	'qf',
 	'flash',
-	'scrollview',
+	'scrollbar',
 	'colorizer',
 	-- keymaps only; yazi itself runs in a wezterm pane, not in nvim
 	'yazi',
@@ -43,9 +46,15 @@ local deferred = {
 	'whichkey',
 }
 
+-- One module going down -- a plugin not installed yet, a typo mid-edit -- should
+-- not take the rest of the list with it. The error still surfaces; only the
+-- abort is dropped.
 local function load(names)
 	for _, name in ipairs(names) do
-		require('config.' .. name)
+		local ok, err = pcall(require, 'config.' .. name)
+		if not ok then
+			vim.notify(('config/%s.lua: %s'):format(name, err), vim.log.levels.ERROR)
+		end
 	end
 end
 

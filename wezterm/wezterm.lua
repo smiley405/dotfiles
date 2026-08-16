@@ -1,14 +1,8 @@
--- default configuration
 -- https://wezfurlong.org/wezterm/config/files.html
 
--- Pull in the wezterm API
 local wezterm = require 'wezterm'
 local act = wezterm.action
--- This table will hold the configuration.
 local config = {}
-
--- In newer versions of wezterm, use the config_builder which will
--- help provide clearer error messages
 if wezterm.config_builder then
 	config = wezterm.config_builder()
 end
@@ -119,18 +113,13 @@ wezterm.on('update-status', function(window, pane)
 end)
 
 
--- This function returns the suggested title for a tab.
--- It prefers the title that was set via `tab:set_title()`
--- or `wezterm cli set-tab-title`, but falls back to the
--- title of the active pane in that tab.
+-- An explicitly set title (tab:set_title / `wezterm cli set-tab-title`) wins;
+-- otherwise the active pane's.
 local function tab_title(tab_info)
 	local title = tab_info.tab_title
-	-- if the tab title is explicitly set, take that
 	if title and #title > 0 then
 		return title
 	end
-	-- Otherwise, use the title from the active pane
-	-- in that tab
 	return tab_info.active_pane.title
 end
 
@@ -199,8 +188,6 @@ end
 )
 
 config.check_for_updates = false
--- to make the scrollbar visible, you might need to add settings.json this { "tui": "default" }
--- something like that in other tui app's config settings
 config.enable_scroll_bar = true
 
 -- Top, because every overlay -- tab navigator, PaneSelect, palette -- opens
@@ -259,10 +246,7 @@ if wezterm.target_triple:find('windows') then
 	config.default_domain = 'WSL:Ubuntu'
 end
 
--- This is where you actually apply your config choices
 
--- For example, changing the color scheme:
--- config.color_scheme = 'AdventureTime'
 
 
 -- Pinky + thumb, and pressed more than anything else here, so it cannot be a
@@ -330,12 +314,7 @@ config.mouse_bindings = selection_bindings
 config.leader = { key = 'Space', mods = 'CTRL', timeout_milliseconds = 1000 }
 
 
--- PaneSelect
 -- https://wezfurlong.org/wezterm/config/lua/keyassignment/PaneSelect.html
-
--- 36 is the default, but you can choose a different size.
--- Uses the same font as window_frame.font
--- config.pane_select_font_size=36,
 
 
 -- The ANSI palette was stock while nvim ran tokyonight, so shell output and the
@@ -451,7 +430,6 @@ config.keys = {
 	},
 }
 
--- and finally, return the configuration to wezterm
 -- Splits and tabs follow the program in the pane rather than the pane's domain.
 -- Windows only: elsewhere there is just the one domain, so it would be a no-op.
 if wezterm.target_triple:find('windows') then

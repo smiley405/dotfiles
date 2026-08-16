@@ -2,7 +2,6 @@ local gs = require('gitsigns')
 
 gs.setup({
 	current_line_blame = true,
-	--current_line_blame_formatter = '<author>, <committer_time:%R>, <author_time:%Y-%m-%d> - <summary>',
 	current_line_blame_formatter = '<author>, <author_time:%R> • <summary>',
 	on_attach = function(bufnr)
 		local function map(mode, l, r, opts)
@@ -30,8 +29,8 @@ gs.setup({
 })
 
 -- Above the hunk, git belongs to lazygit; conflicts to meld. No plugin for
--- either -- a terminal tab is enough. Commands, not just keymaps, so
--- config/menu.lua calls these instead of repeating them.
+-- either -- a terminal tab is enough. Commands, not just keymaps, so they
+-- show up in the <leader>m palette (config/commands.lua) too.
 
 -- A checkout or stash pop under a running nvim leaves stale buffers, hence
 -- the checktime on the way out.

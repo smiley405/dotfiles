@@ -1,11 +1,7 @@
 -- Collection of independent modules, all off by default; only the ones below
 -- are enabled. Must load before config/noice.lua -- noice picks the snacks
 -- notifier as its toast backend when it is available.
-local ok, snacks = pcall(require, 'snacks')
-if not ok then
-	vim.notify('snacks.nvim missing - run :PlugInstall', vim.log.levels.WARN)
-	return
-end
+local snacks = require('snacks')
 
 snacks.setup({
 	indent = {
@@ -22,8 +18,8 @@ snacks.setup({
 	-- floating vim.ui.input, used by <leader>vrn (rename)
 	input = { enabled = true },
 
-	-- vim.ui.select, used by <space>ca (code action). ui_select hook only --
-	-- fzf.vim still handles file/grep search.
+	-- vim.ui.select, used by <space>ca (code action) and the <leader>a scope
+	-- picker. ui_select hook only -- telescope and grug-far do the searching.
 	picker = { enabled = true, ui_select = true },
 
 	notifier = {
