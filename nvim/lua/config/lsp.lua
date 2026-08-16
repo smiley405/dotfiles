@@ -9,7 +9,8 @@ local servers = {
 	'eslint',
 	'jsonls',
 	'lua_ls',
-	'vue_ls'
+	'vue_ls',
+	'tailwindcss',
 	--'gdscript',
 }
 
