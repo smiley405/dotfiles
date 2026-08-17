@@ -321,9 +321,9 @@ end
 
 -- Project words from ripgrep, kept out of `sources` on purpose: always-on it
 -- would spawn a process per keystroke for hits that are text in the tree, not
--- symbols in scope. Searches getcwd(), so rooter sets the scope. Costs a brief
--- prefix wait on a bare <C-x> before native <C-x><C-f> and friends.
-vim.keymap.set('i', '<C-x><C-r>', function()
+-- symbols in scope. Searches getcwd(), so rooter sets the scope. <C-g> is the
+-- one free slot left in vim's <C-x> completion submodes.
+vim.keymap.set('i', '<C-x><C-g>', function()
 	cmp.complete({
 		config = {
 			sources = {
