@@ -79,6 +79,8 @@ Plug('hrsh7th/nvim-cmp', lazy)
 Plug('hrsh7th/cmp-nvim-lsp', lazy)
 Plug('hrsh7th/cmp-buffer', lazy)
 Plug('hrsh7th/cmp-path', lazy)
+-- manual-only project word completion; keymap in config/cmp.lua
+Plug('lukas-reineke/cmp-rg', lazy)
 Plug('L3MON4D3/LuaSnip', lazy)
 Plug('saadparwaiz1/cmp_luasnip', lazy)
 -- data only, but must be in 'runtimepath' for luasnip's from_vscode loader

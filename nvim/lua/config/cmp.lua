@@ -4,6 +4,7 @@ vim.fn['plug#load'](
 	'nvim-cmp',
 	'cmp-buffer',
 	'cmp-path',
+	'cmp-rg',
 	'LuaSnip',
 	'cmp_luasnip',
 	'friendly-snippets'
@@ -317,6 +318,27 @@ local ok, cmp_autopairs = pcall(require, 'nvim-autopairs.completion.cmp')
 if ok then
 	cmp.event:on('confirm_done', cmp_autopairs.on_confirm_done())
 end
+
+-- Project words from ripgrep, kept out of `sources` on purpose: always-on it
+-- would spawn a process per keystroke for hits that are text in the tree, not
+-- symbols in scope. Searches getcwd(), so rooter sets the scope. Costs a brief
+-- prefix wait on a bare <C-x> before native <C-x><C-f> and friends.
+vim.keymap.set('i', '<C-x><C-r>', function()
+	cmp.complete({
+		config = {
+			sources = {
+				{
+					name = 'rg',
+					-- do not ripgrep the tree for one letter
+					keyword_length = 3,
+					max_item_count = 20,
+					-- on demand; nothing to debounce
+					option = { debounce = 0 },
+				},
+			},
+		},
+	})
+end, { desc = 'Complete from project (ripgrep)' })
 
 -- buffer source for `/` and `?`
 ---@diagnostic disable-next-line: undefined-field
