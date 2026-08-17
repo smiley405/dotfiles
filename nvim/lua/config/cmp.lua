@@ -321,9 +321,10 @@ end
 
 -- Project words from ripgrep, kept out of `sources` on purpose: always-on it
 -- would spawn a process per keystroke for hits that are text in the tree, not
--- symbols in scope. Searches getcwd(), so rooter sets the scope. <C-g> is the
--- one free slot left in vim's <C-x> completion submodes.
-vim.keymap.set('i', '<C-x><C-g>', function()
+-- symbols in scope. Searches getcwd(), so rooter sets the scope. <C-l> is the
+-- only insert-mode ctrl key with no native meaning, and it sits with the menu
+-- keys above rather than across the keyboard from them.
+vim.keymap.set('i', '<C-l>', function()
 	cmp.complete({
 		config = {
 			sources = {
