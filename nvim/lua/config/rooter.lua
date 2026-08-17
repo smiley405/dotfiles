@@ -1,5 +1,4 @@
--- Auto-cd to the project root, plus a cached project history with a telescope
--- picker -- what makes a monorepo of sibling apps navigable.
+-- Auto-cd to the project root, plus a cached project history picker.
 local rooter = require('rooter')
 
 -- trailing slash = must be a directory
@@ -13,18 +12,17 @@ local origin = vim.fn.getcwd()
 
 rooter.setup({
 	root_patterns = root_patterns,
-	-- nearest, not outermost: roots at .../games/claw, not the monorepo. Narrow
-	-- suits editing; <leader>a widens when needed.
+	-- nearest, not outermost: roots at games/claw, not the monorepo
 	outermost = false,
-	-- window-local, as g:rooter_cd_cmd was
+	-- window-local, not global
 	command = 'lcd',
 	enable_cache = true,
 	-- '' leaves the cwd alone for files outside any project
 	project_non_root = '',
 })
 
--- Restores g:rooter_resolve_links = 1: this plugin makes roots absolute but not
--- symlink-resolved, so a project reached via a link would root to the link path.
+-- Roots come back absolute but not symlink-resolved, so a project reached via a
+-- link would root to the link path.
 rooter.reg_callback(function()
 	local cwd = vim.fn.getcwd()
 	local real = vim.fn.resolve(cwd)
@@ -33,7 +31,7 @@ rooter.reg_callback(function()
 	end
 end, 'resolve symlinked project roots')
 
--- Which of the markers above exist in a directory, for labelling the picker.
+-- Markers present in a directory, for the picker label.
 local function markers_at(dir)
 	local found = {}
 	for _, pattern in ipairs(root_patterns) do
@@ -70,12 +68,49 @@ local function ancestors()
 	return list
 end
 
--- Rooting picks one directory; this picks any ancestor. Everything reading the
--- cwd follows -- grug-far's scope, telescope's file list. Renders through
+-- :cd inside a window also clears that window's local dir, so rooter's lcds
+-- cannot shadow the pick.
+local function set_scope(dir)
+	local cmd = 'cd ' .. vim.fn.fnameescape(dir)
+	for _, win in ipairs(vim.api.nvim_list_wins()) do
+		vim.api.nvim_win_call(win, function()
+			vim.cmd(cmd)
+		end)
+	end
+	vim.cmd(cmd)
+end
+
+local pin = vim.api.nvim_create_augroup('scope-pin', { clear = true })
+
+-- Rooter re-cds on every BufEnter -- the picker closing is one -- so a widened
+-- scope collapsed before any search read it. Mute it until a real file opens;
+-- buftype and buflisted are what tell a file from a prompt or preview.
+local function pin_scope(dir, from)
+	vim.api.nvim_clear_autocmds({ group = pin })
+	rooter.disable()
+	set_scope(dir)
+
+	vim.api.nvim_create_autocmd('BufEnter', {
+		group = pin,
+		callback = function(e)
+			if e.buf == from or vim.api.nvim_buf_get_name(e.buf) == ''
+				or vim.bo[e.buf].buftype ~= '' or not vim.bo[e.buf].buflisted then
+				return
+			end
+			vim.api.nvim_clear_autocmds({ group = pin })
+			rooter.enable()
+			rooter.current_root()
+		end,
+	})
+end
+
+-- Rooting picks one directory; this picks any ancestor. Renders through
 -- vim.ui.select, which config/snacks.lua points at the snacks picker.
 vim.keymap.set('n', '<leader>a', function()
 	local dirs = ancestors()
 	local cwd = vim.fn.getcwd()
+	-- before the picker's own buffer becomes current
+	local from = vim.api.nvim_get_current_buf()
 
 	vim.ui.select(dirs, {
 		prompt = 'Scope (cwd):',
@@ -94,7 +129,7 @@ vim.keymap.set('n', '<leader>a', function()
 		if not choice then
 			return
 		end
-		vim.cmd('lcd ' .. vim.fn.fnameescape(choice))
+		pin_scope(choice, from)
 		vim.notify('cwd: ' .. vim.fn.fnamemodify(choice, ':~'))
 	end)
 end, { desc = 'Set scope (cwd) to an ancestor' })
