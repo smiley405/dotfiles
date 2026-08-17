@@ -280,13 +280,13 @@ local function tab_like_parent()
 	end)
 end
 
--- perform_action's second arg is the target pane, so panes that are not active
--- can be closed too.
+-- confirm = true ignores perform_action's target pane and prompts in the active
+-- one, so closing the others has to be unconfirmed.
 local function close_other_panes()
 	return wezterm.action_callback(function(window, pane)
 		for _, p in ipairs(window:active_tab():panes()) do
 			if p:pane_id() ~= pane:pane_id() then
-				window:perform_action(act.CloseCurrentPane { confirm = true }, p)
+				window:perform_action(act.CloseCurrentPane { confirm = false }, p)
 			end
 		end
 	end)
