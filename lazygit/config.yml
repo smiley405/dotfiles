@@ -18,6 +18,11 @@ gui:
   # was empty, so lazygit drew no file icons at all
   nerdFontsVersion: '3'
 
+# `e` gives the file to the nvim that started lazygit, if there is one, rather
+# than nesting a second one
+os:
+  editPreset: 'nvim-remote'
+
 customCommands:
   # lazygit has <ctrl+t> everywhere but here. bin/git-treediff opens the whole
   # repo side by side, not just the changed files.

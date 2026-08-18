@@ -280,6 +280,21 @@ local function tab_like_parent()
 	end)
 end
 
+-- CloseCurrentPane always closes the active pane, whatever perform_action is
+-- aimed at, so each one is activated before it is closed.
+local function close_other_panes()
+	return wezterm.action_callback(function(window, pane)
+		local keep = pane:pane_id()
+		for _, p in ipairs(window:active_tab():panes()) do
+			if p:pane_id() ~= keep then
+				p:activate()
+				window:perform_action(act.CloseCurrentPane { confirm = false }, p)
+			end
+		end
+		pane:activate()
+	end)
+end
+
 -- The three ways a left button finishes a selection: drag, double click, triple
 -- click. Stock bindings with copy_and_say wrapped round them; the rest of the
 -- mouse keeps wezterm's defaults, which merge in around these.
@@ -355,10 +370,6 @@ config.keys = {
 	{ key = 'k', mods = 'LEADER', action = act.ActivatePaneDirection 'Up' },
 	{ key = 'l', mods = 'LEADER', action = act.ActivatePaneDirection 'Right' },
 
-	-- LEADER s / LEADER v -- split below / right
-	{ key = 's', mods = 'LEADER', action = act.SplitPane { direction = 'Down' } },
-	{ key = 'v', mods = 'LEADER', action = act.SplitPane { direction = 'Right' } },
-
 	-- LEADER H/J/K/L -- split toward any edge. No vim equivalent; shifted so
 	-- the letter still names the direction.
 	{ key = 'H', mods = 'LEADER', action = act.SplitPane { direction = 'Left' } },
@@ -375,9 +386,9 @@ config.keys = {
 	-- LEADER p -- command palette, the searchable form of all of these
 	{ key = 'p', mods = 'LEADER', action = act.ActivateCommandPalette },
 
-	-- LEADER x -- exchange with the pane picked
+	-- LEADER s -- exchange with the pane picked
 	{
-		key = 'x',
+		key = 's',
 		mods = 'LEADER',
 		action = act.PaneSelect {
 			mode = 'SwapWithActive',
@@ -387,6 +398,27 @@ config.keys = {
 
 	-- LEADER q -- close this pane
 	{ key = 'q', mods = 'LEADER', action = act.CloseCurrentPane { confirm = true } },
+
+	-- LEADER Q -- close every other pane in the tab
+	{ key = 'Q', mods = 'LEADER', action = close_other_panes() },
+
+	-- LEADER x -- quit wezterm, every window of it
+	{
+		key = 'x',
+		mods = 'LEADER',
+		action = act.InputSelector {
+			title = 'Quit wezterm?',
+			choices = {
+				{ label = 'no, stay' },
+				{ label = 'yes, quit everything' },
+			},
+			action = wezterm.action_callback(function(window, pane, _id, label)
+				if label == 'yes, quit everything' then
+					window:perform_action(act.QuitApplication, pane)
+				end
+			end),
+		},
+	},
 
 	-- LEADER t/T/i/r -- tabs. No vim equivalent.
 	{ key = 't', mods = 'LEADER', action = act.SpawnTab 'CurrentPaneDomain' },
@@ -409,31 +441,12 @@ config.keys = {
 			end),
 		},
 	},
-
-	-- LEADER Q, not x: x is <C-w>x to a vim hand, and a no-prompt kill one key
-	-- from q is not what that finger expects.
-	{
-		key = 'Q',
-		mods = 'LEADER',
-		action = act.InputSelector {
-			title = 'Quit wezterm?',
-			choices = {
-				{ label = 'no, stay' },
-				{ label = 'yes, quit everything' },
-			},
-			action = wezterm.action_callback(function(window, pane, _id, label)
-				if label == 'yes, quit everything' then
-					window:perform_action(act.QuitApplication, pane)
-				end
-			end),
-		},
-	},
 }
 
 -- Splits and tabs follow the program in the pane rather than the pane's domain.
 -- Windows only: elsewhere there is just the one domain, so it would be a no-op.
 if wezterm.target_triple:find('windows') then
-	local dirs = { s = 'Down', v = 'Right', H = 'Left', J = 'Down', K = 'Up', L = 'Right' }
+	local dirs = { H = 'Left', J = 'Down', K = 'Up', L = 'Right' }
 	for _, k in ipairs(config.keys) do
 		if k.mods == 'LEADER' then
 			if dirs[k.key] then

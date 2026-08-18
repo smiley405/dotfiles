@@ -27,3 +27,11 @@ desc = "Open in nvim (new wezterm tab)"
 on = "<C-e>"
 run = 'shell -- reveal'
 desc = "Open cwd in the system file manager"
+
+# `z` and `Z` only reach below the cwd; jump.yazi adds the ancestors and the
+# rest of the repo.
+
+[[mgr.prepend_keymap]]
+on = [ "g", "j" ]
+run = "plugin jump"
+desc = "Jump to any directory (ancestors + repo)"
