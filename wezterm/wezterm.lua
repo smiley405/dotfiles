@@ -295,6 +295,15 @@ local function close_other_panes()
 	end)
 end
 
+-- shell titles all repeat the same user@host, and a path's tail is what names it
+local PANE_TITLE_WIDTH = 34
+local function pane_title(pane)
+	local title = (pane:get_title() or ''):gsub('^[^%s@]+@[^%s:]+:%s*', '')
+	local short = wezterm.truncate_left(title, PANE_TITLE_WIDTH - 1)
+	if short ~= title then short = '\u{2026}' .. short end
+	return wezterm.pad_right(short, PANE_TITLE_WIDTH)
+end
+
 -- PaneSelect takes no callback, so it cannot zoom what it picked. The list
 -- carries where each pane sits, which is what the overlay was for.
 local function select_and_zoom()
@@ -326,9 +335,9 @@ local function select_and_zoom()
 					{ Foreground = { Color = ui.blue } },
 					{ Text = o.is_active and '\u{25cf} ' or '  ' },
 					{ Foreground = { Color = ui.active_fg } },
-					{ Text = string.format('%-30s', o.pane:get_title() or '') },
+					{ Text = pane_title(o.pane) },
 					{ Foreground = { Color = ui.dim } },
-					{ Text = table.concat(where, ' ') },
+					{ Text = '  ' .. table.concat(where, ' ') },
 				},
 			}
 		end
