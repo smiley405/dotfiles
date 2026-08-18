@@ -139,6 +139,27 @@ cd; it `call`s yazi so a yazi that is itself a `.cmd` shim comes back.
 Under WSL the two stack: `y` moves the shell, OSC 7 reports it, so the next
 split starts there.
 
+## gj jumps anywhere in the repo
+
+Every jump yazi ships starts from the current directory: `z` fzf-searches
+below it, `Z` only knows what zoxide has already seen, `h` makes you count
+levels. In an unfamiliar monorepo the directory you want is usually up several
+levels and down another branch, so none of them reach it.
+
+`gj` (`yazi/plugins/jump.yazi`) puts both directions in one fzf buffer: the
+ancestors of the current directory, then every directory under the git root.
+Ancestors come from the path itself, so a cold start deep in an unknown tree
+still gets a complete picker; the rest comes from `fd`, which honours
+`.gitignore` -- `node_modules` is what makes the naive version unusable.
+
+Thousands of rows type fine but browse badly, so the order is by distance:
+ancestors (`↑`), then what is under you (`↓`), then the repo shallowest-first.
+Rows below the root are root-relative, the preview pane runs `fd` on the row
+you are on, and the colours are theme.toml's.
+
+Outside a repo the second half falls back to the current directory. `z` and
+`Z` are untouched.
+
 ## Clipboard
 
 Neovim shells out for the system clipboard, so `clipboard=unnamedplus`

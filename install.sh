@@ -112,7 +112,7 @@ else
 fi
 
 printf 'dotfiles: dependencies\n'
-for tool in nvim yazi lazygit rg fd jq wezterm meld tree-sitter; do
+for tool in nvim yazi lazygit rg fd fzf jq wezterm meld tree-sitter; do
 	if command -v "$tool" >/dev/null 2>&1; then
 		info "ok      $tool"
 	elif [ "$tool" = wezterm ] && command -v wezterm.exe >/dev/null 2>&1; then

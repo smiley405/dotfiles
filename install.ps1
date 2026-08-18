@@ -182,7 +182,7 @@ if ($includes -contains $difftoolConf) {
 }
 
 Write-Host 'dotfiles: dependencies'
-foreach ($tool in 'nvim', 'yazi', 'lazygit', 'rg', 'fd', 'jq', 'wezterm', 'pwsh', 'meld', 'tree-sitter') {
+foreach ($tool in 'nvim', 'yazi', 'lazygit', 'rg', 'fd', 'fzf', 'jq', 'wezterm', 'pwsh', 'meld', 'tree-sitter') {
 	if (Get-Command $tool -ErrorAction SilentlyContinue) {
 		Info "ok      $tool"
 	} elseif ($tool -eq 'pwsh') {
