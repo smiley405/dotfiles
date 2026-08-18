@@ -295,6 +295,56 @@ local function close_other_panes()
 	end)
 end
 
+-- PaneSelect takes no callback, so it cannot zoom what it picked. The list
+-- carries where each pane sits, which is what the overlay was for.
+local function select_and_zoom()
+	return wezterm.action_callback(function(window, pane)
+		local tab = pane:tab()
+		if not tab then return end
+		local infos = tab:panes_with_info()
+
+		local lo_x, hi_x, lo_y, hi_y = math.huge, -math.huge, math.huge, -math.huge
+		for _, o in ipairs(infos) do
+			lo_x, hi_x = math.min(lo_x, o.left), math.max(hi_x, o.left)
+			lo_y, hi_y = math.min(lo_y, o.top), math.max(hi_y, o.top)
+		end
+
+		local choices = {}
+		for _, o in ipairs(infos) do
+			local where = {}
+			if hi_y > lo_y then
+				where[#where + 1] = o.top == lo_y and 'top' or (o.top == hi_y and 'bottom' or 'middle')
+			end
+			if hi_x > lo_x then
+				where[#where + 1] = o.left == lo_x and 'left' or (o.left == hi_x and 'right' or 'middle')
+			end
+			-- title, not process: every WSL pane reports wslhost.exe, as tab_program notes
+			local label = string.format('%-30s %s', o.pane:get_title() or '', table.concat(where, ' '))
+			choices[#choices + 1] = {
+				id = tostring(o.pane:pane_id()),
+				label = (label:gsub('%s+$', '')),
+			}
+		end
+
+		-- digits, so one keypress picks
+		window:perform_action(act.InputSelector {
+			title = 'select a pane',
+			alphabet = '123456789',
+			choices = choices,
+			action = wezterm.action_callback(function(_, _, id)
+				if not id then return end
+				for _, o in ipairs(tab:panes_with_info()) do
+					if tostring(o.pane:pane_id()) == id then
+						o.pane:activate()
+						tab:set_zoomed(true)
+						return
+					end
+				end
+			end),
+		}, pane)
+	end)
+end
+
 -- The three ways a left button finishes a selection: drag, double click, triple
 -- click. Stock bindings with copy_and_say wrapped round them; the rest of the
 -- mouse keeps wezterm's defaults, which merge in around these.
@@ -380,8 +430,8 @@ local keys = {
 	-- LEADER o -- zoom. "only" in vim, though <C-w>o is final and this toggles.
 	{ key = 'o', mods = 'LEADER', action = act.TogglePaneZoomState },
 
-	-- LEADER s -- pick a pane. Not vim's <C-w>w; s is select.
-	{ key = 's', mods = 'LEADER', action = act.PaneSelect },
+	-- LEADER s -- pick a pane, zoomed. Not vim's <C-w>w; s is select.
+	{ key = 's', mods = 'LEADER', action = select_and_zoom() },
 
 	-- LEADER e -- exchange with the pane picked. Not vim's <C-w>x.
 	{
@@ -473,7 +523,7 @@ local leader_help = {
 	K = 'split up',
 	L = 'split right',
 	o = 'zoom this pane',
-	s = 'select a pane',
+	s = 'select a pane, zoomed',
 	e = 'exchange with a pane',
 	p = 'command palette',
 	q = 'close this pane',
