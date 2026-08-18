@@ -319,10 +319,17 @@ local function select_and_zoom()
 				where[#where + 1] = o.left == lo_x and 'left' or (o.left == hi_x and 'right' or 'middle')
 			end
 			-- title, not process: every WSL pane reports wslhost.exe, as tab_program notes
-			local label = string.format('%-30s %s', o.pane:get_title() or '', table.concat(where, ' '))
+			-- blue marks the pane you are on, as the status bar does the pane count
 			choices[#choices + 1] = {
 				id = tostring(o.pane:pane_id()),
-				label = (label:gsub('%s+$', '')),
+				label = wezterm.format {
+					{ Foreground = { Color = ui.blue } },
+					{ Text = o.is_active and '\u{25cf} ' or '  ' },
+					{ Foreground = { Color = ui.active_fg } },
+					{ Text = string.format('%-30s', o.pane:get_title() or '') },
+					{ Foreground = { Color = ui.dim } },
+					{ Text = table.concat(where, ' ') },
+				},
 			}
 		end
 
