@@ -31,6 +31,12 @@ local ui = {
 local COPIED_TOAST_SECONDS = 2
 local copied_at = nil
 
+-- PaneSelect takes no callback and there is no pane-focus event, so LEADER s
+-- arms this and update-status does the zoom once the active pane has moved.
+-- Wall-clock bound: an escaped selection must not zoom a later, unrelated switch.
+local ZOOM_ARM_SECONDS = 3
+local zoom_from, zoom_until = nil, nil
+
 -- wezterm.gui exposes no default *mouse* bindings to read this back from, so it
 -- is pinned to what `wezterm show-keys` reports. Recheck after a nightly bump.
 local COMPLETE_SELECTION = 'ClipboardAndPrimarySelection'
@@ -75,6 +81,15 @@ wezterm.on('update-status', function(window, pane)
 	-- panes such as the debug overlay aren't attached to a tab
 	if not tab then return end
 	local cells = {}
+
+	if zoom_until then
+		if os.time() > zoom_until then
+			zoom_from, zoom_until = nil, nil
+		elseif pane:pane_id() ~= zoom_from then
+			zoom_from, zoom_until = nil, nil
+			pcall(function() tab:set_zoomed(true) end)
+		end
+	end
 
 	-- a modal keymap with no visible mode is a guessing game
 	if window:leader_is_active() then
@@ -380,8 +395,15 @@ local keys = {
 	-- LEADER o -- zoom. "only" in vim, though <C-w>o is final and this toggles.
 	{ key = 'o', mods = 'LEADER', action = act.TogglePaneZoomState },
 
-	-- LEADER s -- pick a pane. Not vim's <C-w>w; s is select.
-	{ key = 's', mods = 'LEADER', action = act.PaneSelect },
+	-- LEADER s -- pick a pane, and zoom it. Not vim's <C-w>w; s is select.
+	{
+		key = 's',
+		mods = 'LEADER',
+		action = wezterm.action_callback(function(window, pane)
+			zoom_from, zoom_until = pane:pane_id(), os.time() + ZOOM_ARM_SECONDS
+			window:perform_action(act.PaneSelect { alphabet = '1234567890' }, pane)
+		end),
+	},
 
 	-- LEADER e -- exchange with the pane picked. Not vim's <C-w>x.
 	{
@@ -473,7 +495,7 @@ local leader_help = {
 	K = 'split up',
 	L = 'split right',
 	o = 'zoom this pane',
-	s = 'select a pane',
+	s = 'select a pane, zoomed',
 	e = 'exchange with a pane',
 	p = 'command palette',
 	q = 'close this pane',
