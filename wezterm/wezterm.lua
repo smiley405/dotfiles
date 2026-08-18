@@ -295,6 +295,72 @@ local function close_other_panes()
 	end)
 end
 
+-- shell titles all repeat the same user@host, and a path's tail is what names it
+local PANE_TITLE_WIDTH = 34
+local function pane_title(pane)
+	local title = (pane:get_title() or ''):gsub('^[^%s@]+@[^%s:]+:%s*', '')
+	local short = wezterm.truncate_left(title, PANE_TITLE_WIDTH - 1)
+	if short ~= title then short = '\u{2026}' .. short end
+	return wezterm.pad_right(short, PANE_TITLE_WIDTH)
+end
+
+-- PaneSelect takes no callback, so it cannot zoom what it picked. The list
+-- carries where each pane sits, which is what the overlay was for.
+local function select_and_zoom()
+	return wezterm.action_callback(function(window, pane)
+		local tab = pane:tab()
+		if not tab then return end
+		local infos = tab:panes_with_info()
+
+		local lo_x, hi_x, lo_y, hi_y = math.huge, -math.huge, math.huge, -math.huge
+		for _, o in ipairs(infos) do
+			lo_x, hi_x = math.min(lo_x, o.left), math.max(hi_x, o.left)
+			lo_y, hi_y = math.min(lo_y, o.top), math.max(hi_y, o.top)
+		end
+
+		local choices = {}
+		for _, o in ipairs(infos) do
+			local where = {}
+			if hi_y > lo_y then
+				where[#where + 1] = o.top == lo_y and 'top' or (o.top == hi_y and 'bottom' or 'middle')
+			end
+			if hi_x > lo_x then
+				where[#where + 1] = o.left == lo_x and 'left' or (o.left == hi_x and 'right' or 'middle')
+			end
+			-- title, not process: every WSL pane reports wslhost.exe, as tab_program notes
+			-- blue marks the pane you are on, as the status bar does the pane count
+			choices[#choices + 1] = {
+				id = tostring(o.pane:pane_id()),
+				label = wezterm.format {
+					{ Foreground = { Color = ui.blue } },
+					{ Text = o.is_active and '\u{25cf} ' or '  ' },
+					{ Foreground = { Color = ui.active_fg } },
+					{ Text = pane_title(o.pane) },
+					{ Foreground = { Color = ui.dim } },
+					{ Text = '  ' .. table.concat(where, ' ') },
+				},
+			}
+		end
+
+		-- digits, so one keypress picks
+		window:perform_action(act.InputSelector {
+			title = 'select a pane',
+			alphabet = '123456789',
+			choices = choices,
+			action = wezterm.action_callback(function(_, _, id)
+				if not id then return end
+				for _, o in ipairs(tab:panes_with_info()) do
+					if tostring(o.pane:pane_id()) == id then
+						o.pane:activate()
+						tab:set_zoomed(true)
+						return
+					end
+				end
+			end),
+		}, pane)
+	end)
+end
+
 -- The three ways a left button finishes a selection: drag, double click, triple
 -- click. Stock bindings with copy_and_say wrapped round them; the rest of the
 -- mouse keeps wezterm's defaults, which merge in around these.
@@ -363,7 +429,7 @@ config.colors = {
 
 -- Leader is CTRL+Space. The pane keys mirror vim's <C-w> window prefix, so
 -- LEADER h is what <C-w>h is in vim; the odd ones out are marked.
-config.keys = {
+local keys = {
 	-- LEADER h/j/k/l -- move between panes
 	{ key = 'h', mods = 'LEADER', action = act.ActivatePaneDirection 'Left' },
 	{ key = 'j', mods = 'LEADER', action = act.ActivatePaneDirection 'Down' },
@@ -380,21 +446,21 @@ config.keys = {
 	-- LEADER o -- zoom. "only" in vim, though <C-w>o is final and this toggles.
 	{ key = 'o', mods = 'LEADER', action = act.TogglePaneZoomState },
 
-	-- LEADER w -- pick a pane
-	{ key = 'w', mods = 'LEADER', action = act.PaneSelect },
+	-- LEADER s -- pick a pane, zoomed. Not vim's <C-w>w; s is select.
+	{ key = 's', mods = 'LEADER', action = select_and_zoom() },
 
-	-- LEADER p -- command palette, the searchable form of all of these
-	{ key = 'p', mods = 'LEADER', action = act.ActivateCommandPalette },
-
-	-- LEADER s -- exchange with the pane picked
+	-- LEADER e -- exchange with the pane picked. Not vim's <C-w>x.
 	{
-		key = 's',
+		key = 'e',
 		mods = 'LEADER',
 		action = act.PaneSelect {
 			mode = 'SwapWithActive',
 			alphabet = '1234567890',
 		},
 	},
+
+	-- LEADER p -- command palette, the searchable form of all of these
+	{ key = 'p', mods = 'LEADER', action = act.ActivateCommandPalette },
 
 	-- LEADER q -- close this pane
 	{ key = 'q', mods = 'LEADER', action = act.CloseCurrentPane { confirm = true } },
@@ -450,7 +516,7 @@ config.keys = {
 -- Windows only: elsewhere there is just the one domain, so it would be a no-op.
 if wezterm.target_triple:find('windows') then
 	local dirs = { H = 'Left', J = 'Down', K = 'Up', L = 'Right' }
-	for _, k in ipairs(config.keys) do
+	for _, k in ipairs(keys) do
 		if k.mods == 'LEADER' then
 			if dirs[k.key] then
 				k.action = split_like_parent(dirs[k.key])
@@ -460,6 +526,60 @@ if wezterm.target_triple:find('windows') then
 		end
 	end
 end
+
+-- LEADER Space -- the leader map, as a list. A key entry cannot carry a description
+-- of its own, so the text lives here and is matched back up by the letter.
+local leader_help = {
+	h = 'pane left',
+	j = 'pane down',
+	k = 'pane up',
+	l = 'pane right',
+	H = 'split left',
+	J = 'split down',
+	K = 'split up',
+	L = 'split right',
+	o = 'zoom this pane',
+	s = 'select a pane, zoomed',
+	e = 'exchange with a pane',
+	p = 'command palette',
+	q = 'close this pane',
+	Q = 'close the other panes',
+	c = 'close this tab',
+	x = 'quit wezterm',
+	t = 'new tab',
+	T = 'new tab, native domain',
+	i = 'tab navigator',
+	r = 'rename tab',
+}
+
+local choices = {}
+for i, k in ipairs(keys) do
+	if k.mods == 'LEADER' then
+		-- id indexes into keys, read at selection time so windows gets its
+		-- domain-following split; a key with no help lists as ???, not nothing
+		choices[#choices + 1] = {
+			id = tostring(i),
+			label = string.format('%-2s %s', k.key, leader_help[k.key] or '???'),
+		}
+	end
+end
+
+keys[#keys + 1] = {
+	key = 'Space',
+	mods = 'LEADER',
+	action = act.InputSelector {
+		title = 'LEADER',
+		-- default mode adds shortcut letters of its own, a second alphabet
+		fuzzy = true,
+		fuzzy_description = 'leader ',
+		choices = choices,
+		action = wezterm.action_callback(function(window, pane, id)
+			if id then window:perform_action(keys[tonumber(id)].action, pane) end
+		end),
+	},
+}
+
+config.keys = keys
 
 return config
 
