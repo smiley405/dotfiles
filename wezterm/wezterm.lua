@@ -461,7 +461,7 @@ if wezterm.target_triple:find('windows') then
 	end
 end
 
--- LEADER ? -- the leader map, as a list. A key entry cannot carry a description
+-- LEADER Space -- the leader map, as a list. A key entry cannot carry a description
 -- of its own, so the text lives here and is matched back up by the letter.
 local leader_help = {
 	h = 'pane left',
@@ -499,7 +499,7 @@ for i, k in ipairs(keys) do
 end
 
 keys[#keys + 1] = {
-	key = '?',
+	key = 'Space',
 	mods = 'LEADER',
 	action = act.InputSelector {
 		title = 'LEADER',
