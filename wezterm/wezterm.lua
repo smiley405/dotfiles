@@ -380,21 +380,21 @@ config.keys = {
 	-- LEADER o -- zoom. "only" in vim, though <C-w>o is final and this toggles.
 	{ key = 'o', mods = 'LEADER', action = act.TogglePaneZoomState },
 
-	-- LEADER w -- pick a pane
-	{ key = 'w', mods = 'LEADER', action = act.PaneSelect },
+	-- LEADER s -- pick a pane. Not vim's <C-w>w; s is select.
+	{ key = 's', mods = 'LEADER', action = act.PaneSelect },
 
-	-- LEADER p -- command palette, the searchable form of all of these
-	{ key = 'p', mods = 'LEADER', action = act.ActivateCommandPalette },
-
-	-- LEADER s -- exchange with the pane picked
+	-- LEADER e -- exchange with the pane picked. Not vim's <C-w>x.
 	{
-		key = 's',
+		key = 'e',
 		mods = 'LEADER',
 		action = act.PaneSelect {
 			mode = 'SwapWithActive',
 			alphabet = '1234567890',
 		},
 	},
+
+	-- LEADER p -- command palette, the searchable form of all of these
+	{ key = 'p', mods = 'LEADER', action = act.ActivateCommandPalette },
 
 	-- LEADER q -- close this pane
 	{ key = 'q', mods = 'LEADER', action = act.CloseCurrentPane { confirm = true } },
