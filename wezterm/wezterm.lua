@@ -402,6 +402,9 @@ config.keys = {
 	-- LEADER Q -- close every other pane in the tab
 	{ key = 'Q', mods = 'LEADER', action = close_other_panes() },
 
+	-- LEADER c -- close this tab
+	{ key = 'c', mods = 'LEADER', action = act.CloseCurrentTab { confirm = true } },
+
 	-- LEADER x -- quit wezterm, every window of it
 	{
 		key = 'x',
