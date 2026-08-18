@@ -363,7 +363,7 @@ config.colors = {
 
 -- Leader is CTRL+Space. The pane keys mirror vim's <C-w> window prefix, so
 -- LEADER h is what <C-w>h is in vim; the odd ones out are marked.
-config.keys = {
+local keys = {
 	-- LEADER h/j/k/l -- move between panes
 	{ key = 'h', mods = 'LEADER', action = act.ActivatePaneDirection 'Left' },
 	{ key = 'j', mods = 'LEADER', action = act.ActivatePaneDirection 'Down' },
@@ -450,7 +450,7 @@ config.keys = {
 -- Windows only: elsewhere there is just the one domain, so it would be a no-op.
 if wezterm.target_triple:find('windows') then
 	local dirs = { H = 'Left', J = 'Down', K = 'Up', L = 'Right' }
-	for _, k in ipairs(config.keys) do
+	for _, k in ipairs(keys) do
 		if k.mods == 'LEADER' then
 			if dirs[k.key] then
 				k.action = split_like_parent(dirs[k.key])
@@ -460,6 +460,60 @@ if wezterm.target_triple:find('windows') then
 		end
 	end
 end
+
+-- LEADER ? -- the leader map, as a list. A key entry cannot carry a description
+-- of its own, so the text lives here and is matched back up by the letter.
+local leader_help = {
+	h = 'pane left',
+	j = 'pane down',
+	k = 'pane up',
+	l = 'pane right',
+	H = 'split left',
+	J = 'split down',
+	K = 'split up',
+	L = 'split right',
+	o = 'zoom this pane',
+	s = 'select a pane',
+	e = 'exchange with a pane',
+	p = 'command palette',
+	q = 'close this pane',
+	Q = 'close the other panes',
+	c = 'close this tab',
+	x = 'quit wezterm',
+	t = 'new tab',
+	T = 'new tab, native domain',
+	i = 'tab navigator',
+	r = 'rename tab',
+}
+
+local choices = {}
+for i, k in ipairs(keys) do
+	if k.mods == 'LEADER' then
+		-- id indexes into keys, read at selection time so windows gets its
+		-- domain-following split; a key with no help lists as ???, not nothing
+		choices[#choices + 1] = {
+			id = tostring(i),
+			label = string.format('%-2s %s', k.key, leader_help[k.key] or '???'),
+		}
+	end
+end
+
+keys[#keys + 1] = {
+	key = '?',
+	mods = 'LEADER',
+	action = act.InputSelector {
+		title = 'LEADER',
+		-- default mode adds shortcut letters of its own, a second alphabet
+		fuzzy = true,
+		fuzzy_description = 'leader ',
+		choices = choices,
+		action = wezterm.action_callback(function(window, pane, id)
+			if id then window:perform_action(keys[tonumber(id)].action, pane) end
+		end),
+	},
+}
+
+config.keys = keys
 
 return config
 
