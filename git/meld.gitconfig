@@ -7,5 +7,8 @@
 	# no <file>.orig after every resolve; the merge is in the index already
 	keepBackup = false
 [mergetool "meld"]
-	# settle the hunks that do not really conflict, leaving only the decisions
-	useAutoMerge = true
+	# git's own definition titles the panes with its temp filenames: nothing says
+	# which side is ours, or that only the middle pane is written back. a cmd of
+	# our own skips mergetool.meld.useAutoMerge, so --auto-merge settles the
+	# hunks that do not really conflict here instead
+	cmd = meld --auto-merge --output=\"$MERGED\" -L \"LOCAL -- ours, already in HEAD\" -L \"MERGED -- result, only this pane is saved\" -L \"REMOTE -- theirs, being applied\" -- \"$LOCAL\" \"$BASE\" \"$REMOTE\"

@@ -291,9 +291,17 @@ needs its own, the two windows checkouts included.
 3. windows -- `winget install Meld`
 4. macos -- `brew install --cask meld`
 
-`mergetool.meld.useAutoMerge` is on, so meld settles the hunks that do not
-actually conflict and the panes hold the decisions left to make. git's own
-default hands you the whole file.
+git's builtin definition titles the three panes with its temp filenames --
+`f_LOCAL_9182.txt` and the like -- so nothing says which side is yours or that
+only the middle pane is written back. `mergetool.meld.cmd` passes `-L` labels
+instead: ours on the left, theirs on the right, and between them the base,
+which is both the merge result and the only pane saved. Under a rebase the
+sense inverts -- ours is the upstream being replayed onto, theirs your own
+commit.
+
+A custom `cmd` bypasses `mergetool.meld.useAutoMerge`, so `--auto-merge` rides
+along in it: meld settles the hunks that do not actually conflict and the panes
+hold the decisions left to make. git's own default hands you the whole file.
 
 It has to be on the side the calling git runs on. `git difftool` stages blobs
 under `/tmp/git-blob-XXXXXX`, and a windows meld or a flatpak resolves those in
