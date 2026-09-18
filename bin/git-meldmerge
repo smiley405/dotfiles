@@ -1,0 +1,50 @@
+#!/usr/bin/env bash
+#
+# meld as the mergetool -- mergetool.meld.cmd in git/meld.gitconfig.
+#
+#   git-meldmerge <local> <base> <remote> <merged>
+#
+# git titles the panes with its temp filenames, which name no branch, and
+# ours/theirs invert under a rebase: ours is then the upstream being replayed
+# onto and theirs your own commit. Both sides get their real name here.
+
+set -euo pipefail
+
+die() { printf 'git-meldmerge: %s\n' "$*" >&2; exit 1; }
+
+[ $# -eq 4 ] || die 'usage: git-meldmerge <local> <base> <remote> <merged>'
+command -v meld >/dev/null 2>&1 || die 'meld is not installed'
+
+local_side=$1 base=$2 remote_side=$3 merged=$4
+
+git_dir=$(git rev-parse --git-dir) || die 'not a git repository'
+
+# a branch or tag if a ref reaches the commit, a short sha if none does
+name() { git name-rev --name-only --always "$1" 2>/dev/null || printf '?'; }
+
+ours=$(git rev-parse --abbrev-ref HEAD)
+theirs=theirs
+
+if [ -e "$git_dir/MERGE_HEAD" ]; then
+	theirs=$(name MERGE_HEAD)
+elif [ -d "$git_dir/rebase-merge" ] || [ -d "$git_dir/rebase-apply" ]; then
+	# HEAD is detached at the upstream, so it cannot name the left side; the
+	# state dir holds the target, and REBASE_HEAD the commit being replayed
+	for d in rebase-merge rebase-apply; do
+		if [ -f "$git_dir/$d/onto" ]; then
+			ours=$(name "$(cat "$git_dir/$d/onto")")
+			break
+		fi
+	done
+	theirs=$(name REBASE_HEAD)
+elif [ -e "$git_dir/CHERRY_PICK_HEAD" ]; then
+	theirs=$(name CHERRY_PICK_HEAD)
+elif [ -e "$git_dir/REVERT_HEAD" ]; then
+	theirs="revert of $(name REVERT_HEAD)"
+fi
+
+# short: three pane headers share the window width. --auto-merge settles the
+# hunks that do not really conflict, leaving the decisions
+exec meld --auto-merge --output="$merged" \
+	-L "ours: $ours (LOCAL)" -L "result, saved (MERGED)" -L "theirs: $theirs (REMOTE)" \
+	-- "$local_side" "$base" "$remote_side"

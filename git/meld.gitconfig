@@ -7,5 +7,7 @@
 	# no <file>.orig after every resolve; the merge is in the index already
 	keepBackup = false
 [mergetool "meld"]
-	# settle the hunks that do not really conflict, leaving only the decisions
-	useAutoMerge = true
+	# bin/git-meldmerge: names both sides in the pane headers, which git's own
+	# definition leaves as its temp filenames. a cmd of our own bypasses
+	# mergetool.meld.useAutoMerge, so the script passes --auto-merge itself
+	cmd = git-meldmerge \"$LOCAL\" \"$BASE\" \"$REMOTE\" \"$MERGED\"
