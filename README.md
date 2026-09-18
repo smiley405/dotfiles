@@ -292,16 +292,20 @@ needs its own, the two windows checkouts included.
 4. macos -- `brew install --cask meld`
 
 git's builtin definition titles the three panes with its temp filenames --
-`f_LOCAL_9182.txt` and the like -- so nothing says which side is yours or that
-only the middle pane is written back. `mergetool.meld.cmd` passes `-L` labels
-instead: ours on the left, theirs on the right, and between them the base,
-which is both the merge result and the only pane saved. Under a rebase the
-sense inverts -- ours is the upstream being replayed onto, theirs your own
-commit.
+`f_LOCAL_9182.txt` and the like -- so nothing says which side is yours, and
+ours and theirs invert under a rebase. `mergetool.meld.cmd` runs
+`bin/git-meldmerge` instead, which reads the state git left behind --
+`MERGE_HEAD`, the rebase `onto`, `CHERRY_PICK_HEAD` -- and names both sides:
+`ours: feat/vault`, `result (saved)`, `theirs: dev`. Merging `dev` into
+`feat/vault` reads that way round, rebasing `feat/vault` onto `dev` reads the
+other, which is the point. The middle pane is the base, and the only one
+written back. Like the folder diffs it is found on `$PATH`, not by absolute
+path, so it needs the installers' `bin` link.
 
-A custom `cmd` bypasses `mergetool.meld.useAutoMerge`, so `--auto-merge` rides
-along in it: meld settles the hunks that do not actually conflict and the panes
-hold the decisions left to make. git's own default hands you the whole file.
+A custom `cmd` bypasses `mergetool.meld.useAutoMerge`, so the script passes
+`--auto-merge` itself: meld settles the hunks that do not actually conflict and
+the panes hold the decisions left to make. git's own default hands you the
+whole file.
 
 It has to be on the side the calling git runs on. `git difftool` stages blobs
 under `/tmp/git-blob-XXXXXX`, and a windows meld or a flatpak resolves those in
