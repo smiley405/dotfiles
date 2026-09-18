@@ -46,5 +46,5 @@ fi
 # short: three pane headers share the window width. --auto-merge settles the
 # hunks that do not really conflict, leaving the decisions
 exec meld --auto-merge --output="$merged" \
-	-L "ours: $ours" -L "result (saved)" -L "theirs: $theirs" \
+	-L "ours: $ours (LOCAL)" -L "result, saved (MERGED)" -L "theirs: $theirs (REMOTE)" \
 	-- "$local_side" "$base" "$remote_side"

@@ -296,11 +296,12 @@ git's builtin definition titles the three panes with its temp filenames --
 ours and theirs invert under a rebase. `mergetool.meld.cmd` runs
 `bin/git-meldmerge` instead, which reads the state git left behind --
 `MERGE_HEAD`, the rebase `onto`, `CHERRY_PICK_HEAD` -- and names both sides:
-`ours: feat/vault`, `result (saved)`, `theirs: dev`. Merging `dev` into
-`feat/vault` reads that way round, rebasing `feat/vault` onto `dev` reads the
-other, which is the point. The middle pane is the base, and the only one
-written back. Like the folder diffs it is found on `$PATH`, not by absolute
-path, so it needs the installers' `bin` link.
+`ours: feat/vault (LOCAL)`, `result, saved (MERGED)` and
+`theirs: dev (REMOTE)`. Merging `dev` into `feat/vault` reads that way round,
+rebasing `feat/vault` onto `dev` reads the other, which is the point. The
+middle pane is the base, and the only one written back. Like the folder diffs
+it is found on `$PATH`, not by absolute path, so it needs the installers'
+`bin` link.
 
 A custom `cmd` bypasses `mergetool.meld.useAutoMerge`, so the script passes
 `--auto-merge` itself: meld settles the hunks that do not actually conflict and
