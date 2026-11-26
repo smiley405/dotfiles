@@ -138,13 +138,16 @@ local PROGRAM_ICONS = {
 	docker = '\u{e7b0}',
 }
 -- No program of note running, so the tab says which shell, and so which side
--- of the WSL line, it is on. The colour goes on the icon and the active edge;
--- each is tokyonight's own and clears 4.5:1 on both tab surfaces.
-local CMD = { icon = '\u{ebc4}', color = '#BB9AF7' }        -- magenta
-local POWERSHELL = { icon = '\u{ebc7}', color = '#7AA2F7' } -- blue
-local BASH = { icon = '\u{ebca}', color = '#9ECE6A' }       -- green
-local WSL = { icon = '\u{ebc9}', color = '#FF9E64' }        -- orange, ubuntu's
-local SHELL = { icon = '\u{ebc6}', color = '#7DCFFF' }      -- cyan: zsh, fish, the rest
+-- of the WSL line, it is on. The colour goes on the icon and the active edge,
+-- and as a tint on an inactive tab; the active one keeps the terminal's bg.
+-- Blue and amber already mean something in this bar, so no shell takes them.
+-- Hues sit 50+ degrees apart in OKLCH, and every tint is OKLCH ui.tab's own
+-- lightness at chroma 0.035, so each reads as strong and text holds 6.2:1.
+local CMD = { icon = '\u{ebc4}', color = ui.active_fg, tab = ui.tab } -- neutral
+local POWERSHELL = { icon = '\u{ebc7}', color = '#BB9AF7', tab = '#322B3F' } -- magenta
+local BASH = { icon = '\u{ebca}', color = '#9ECE6A', tab = '#293320' }       -- green
+local WSL = { icon = '\u{ebc9}', color = '#FF9E64', tab = '#3E2A1F' }        -- orange, ubuntu's
+local SHELL = { icon = '\u{ebc6}', color = '#73DACA', tab = '#193531' }      -- teal: zsh, fish, the rest
 local SHELLS = {
 	cmd = CMD,
 	powershell = POWERSHELL,
@@ -166,19 +169,6 @@ local function tab_shell(pane)
 	if shell then return shell end
 	if (pane.domain_name or ''):find('^WSL:') then return WSL end
 	return SHELL
-end
-
--- A wash of the shell's colour over the tab, faint enough that the icon stays
--- the loudest thing on it and the text keeps its contrast.
-local TAB_TINT = 0.12
-local function tint(color, base)
-	local function rgb(h)
-		return tonumber(h:sub(2, 3), 16), tonumber(h:sub(4, 5), 16), tonumber(h:sub(6, 7), 16)
-	end
-	local r1, g1, b1 = rgb(color)
-	local r2, g2, b2 = rgb(base)
-	local function m(a, b) return math.floor(a * TAB_TINT + b * (1 - TAB_TINT) + 0.5) end
-	return string.format('#%02X%02X%02X', m(r1, r2), m(g1, g2), m(b1, b2))
 end
 
 -- Returns the program and, when the title carried it, the name to show.
@@ -217,7 +207,7 @@ function(tab, tabs, panes, config, hover, max_width)
 	local program, named = tab_program(tab)
 	local shell = tab_shell(tab.active_pane)
 	local icon = program and PROGRAM_ICONS[program] or shell.icon
-	background = tint(shell.color, background)
+	if not tab.is_active then background = shell.tab end
 
 	-- numbered because SHIFT+CTRL+<n> jumps to a tab
 	local title = wezterm.truncate_right(named or tab_title(tab), max_width - 6)
