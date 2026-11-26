@@ -137,13 +137,53 @@ local PROGRAM_ICONS = {
 	python3 = '\u{e73c}',
 	docker = '\u{e7b0}',
 }
-local SHELL_ICON = '\u{ebca}'
+-- No program of note running, so the tab says which shell, and so which side
+-- of the WSL line, it is on. The colour goes on the icon and the active edge,
+-- and as a tint on an inactive tab; the active one keeps the terminal's bg.
+-- Blue and amber already mean something in this bar, so no shell takes them.
+-- Hues sit 50+ degrees apart in OKLCH, and every tint is OKLCH ui.tab's own
+-- lightness at chroma 0.035, so each reads as strong and text holds 6.2:1.
+local CMD = { icon = '\u{ebc4}', color = ui.active_fg, tab = ui.tab } -- neutral
+local POWERSHELL = { icon = '\u{ebc7}', color = '#BB9AF7', tab = '#322B3F' } -- magenta
+local BASH = { icon = '\u{ebca}', color = '#9ECE6A', tab = '#293320' }       -- green
+local WSL = { icon = '\u{ebc9}', color = '#FF9E64', tab = '#3E2A1F' }        -- orange, ubuntu's
+local SHELL = { icon = '\u{ebc6}', color = '#73DACA', tab = '#193531' }      -- teal: zsh, fish, the rest
+local SHELLS = {
+	cmd = CMD,
+	powershell = POWERSHELL,
+	pwsh = POWERSHELL,
+	bash = BASH,
+	wslhost = WSL,
+	wsl = WSL,
+}
+
+local function pane_proc(pane)
+	local proc = ((pane.foreground_process_name or ''):lower():match('[^\\/]+$') or '')
+		:gsub('%.exe$', '')
+	return proc
+end
+
+-- The foreground process is the shell only at a prompt; while `bun dev` runs it
+-- is bun, so the last shell seen is kept per pane, across config reloads.
+-- The domain catches a WSL pane whose process wezterm could not read.
+wezterm.GLOBAL.pane_shell = wezterm.GLOBAL.pane_shell or {}
+local function tab_shell(pane)
+	local id = tostring(pane.pane_id)
+	local proc = pane_proc(pane)
+	if SHELLS[proc] then
+		if wezterm.GLOBAL.pane_shell[id] ~= proc then wezterm.GLOBAL.pane_shell[id] = proc end
+		return SHELLS[proc]
+	end
+	local seen = SHELLS[wezterm.GLOBAL.pane_shell[id] or '']
+	if seen then return seen end
+	if (pane.domain_name or ''):find('^WSL:') then return WSL end
+	return SHELL
+end
 
 -- Returns the program and, when the title carried it, the name to show.
 local function tab_program(tab)
 	local pane = tab.active_pane
-	local proc = ((pane.foreground_process_name or ''):lower():match('[^\\/]+$') or '')
-		:gsub('%.exe$', '')
+	local proc = pane_proc(pane)
 	if PROGRAM_ICONS[proc] then return proc, nil end
 
 	-- Every WSL pane reports wslhost.exe, so the process says nothing there and
@@ -171,18 +211,24 @@ function(tab, tabs, panes, config, hover, max_width)
 		foreground = ui.active_fg
 	end
 
+	-- a program keeps its own icon but the shell's colour, so nvim in WSL and
+	-- nvim on windows still read apart
 	local program, named = tab_program(tab)
-	local icon = (program and PROGRAM_ICONS[program] or SHELL_ICON) .. ' '
+	local shell = tab_shell(tab.active_pane)
+	local icon = program and PROGRAM_ICONS[program] or shell.icon
+	if not tab.is_active then background = shell.tab end
 
 	-- numbered because SHIFT+CTRL+<n> jumps to a tab
 	local title = wezterm.truncate_right(named or tab_title(tab), max_width - 6)
 
 	return {
 		{ Background = { Color = background } },
-		{ Foreground = { Color = tab.is_active and ui.blue or background } },
+		{ Foreground = { Color = tab.is_active and shell.color or background } },
 		{ Text = edge },
+		{ Foreground = { Color = shell.color } },
+		{ Text = icon .. ' ' },
 		{ Foreground = { Color = foreground } },
-		{ Text = icon .. (tab.tab_index + 1) .. ' ' .. title .. ' ' },
+		{ Text = (tab.tab_index + 1) .. ' ' .. title .. ' ' },
 	}
 end
 )
