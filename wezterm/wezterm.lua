@@ -163,10 +163,19 @@ local function pane_proc(pane)
 	return proc
 end
 
--- the domain catches a WSL pane whose process wezterm could not read
+-- The foreground process is the shell only at a prompt; while `bun dev` runs it
+-- is bun, so the last shell seen is kept per pane, across config reloads.
+-- The domain catches a WSL pane whose process wezterm could not read.
+wezterm.GLOBAL.pane_shell = wezterm.GLOBAL.pane_shell or {}
 local function tab_shell(pane)
-	local shell = SHELLS[pane_proc(pane)]
-	if shell then return shell end
+	local id = tostring(pane.pane_id)
+	local proc = pane_proc(pane)
+	if SHELLS[proc] then
+		if wezterm.GLOBAL.pane_shell[id] ~= proc then wezterm.GLOBAL.pane_shell[id] = proc end
+		return SHELLS[proc]
+	end
+	local seen = SHELLS[wezterm.GLOBAL.pane_shell[id] or '']
+	if seen then return seen end
 	if (pane.domain_name or ''):find('^WSL:') then return WSL end
 	return SHELL
 end
