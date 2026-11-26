@@ -137,13 +137,41 @@ local PROGRAM_ICONS = {
 	python3 = '\u{e73c}',
 	docker = '\u{e7b0}',
 }
-local SHELL_ICON = '\u{ebca}'
+-- No program of note running, so the tab says which shell, and so which side
+-- of the WSL line, it is on. The colour goes on the icon and the active edge;
+-- each is tokyonight's own and clears 4.5:1 on both tab surfaces.
+local CMD = { icon = '\u{ebc4}', color = '#BB9AF7' }        -- magenta
+local POWERSHELL = { icon = '\u{ebc7}', color = '#7AA2F7' } -- blue
+local BASH = { icon = '\u{ebca}', color = '#9ECE6A' }       -- green
+local WSL = { icon = '\u{ebc9}', color = '#FF9E64' }        -- orange, ubuntu's
+local SHELL = { icon = '\u{ebc6}', color = '#7DCFFF' }      -- cyan: zsh, fish, the rest
+local SHELLS = {
+	cmd = CMD,
+	powershell = POWERSHELL,
+	pwsh = POWERSHELL,
+	bash = BASH,
+	wslhost = WSL,
+	wsl = WSL,
+}
+
+local function pane_proc(pane)
+	local proc = ((pane.foreground_process_name or ''):lower():match('[^\\/]+$') or '')
+		:gsub('%.exe$', '')
+	return proc
+end
+
+-- the domain catches a WSL pane whose process wezterm could not read
+local function tab_shell(pane)
+	local shell = SHELLS[pane_proc(pane)]
+	if shell then return shell end
+	if (pane.domain_name or ''):find('^WSL:') then return WSL end
+	return SHELL
+end
 
 -- Returns the program and, when the title carried it, the name to show.
 local function tab_program(tab)
 	local pane = tab.active_pane
-	local proc = ((pane.foreground_process_name or ''):lower():match('[^\\/]+$') or '')
-		:gsub('%.exe$', '')
+	local proc = pane_proc(pane)
 	if PROGRAM_ICONS[proc] then return proc, nil end
 
 	-- Every WSL pane reports wslhost.exe, so the process says nothing there and
@@ -171,18 +199,23 @@ function(tab, tabs, panes, config, hover, max_width)
 		foreground = ui.active_fg
 	end
 
+	-- a program keeps its own icon but the shell's colour, so nvim in WSL and
+	-- nvim on windows still read apart
 	local program, named = tab_program(tab)
-	local icon = (program and PROGRAM_ICONS[program] or SHELL_ICON) .. ' '
+	local shell = tab_shell(tab.active_pane)
+	local icon = program and PROGRAM_ICONS[program] or shell.icon
 
 	-- numbered because SHIFT+CTRL+<n> jumps to a tab
 	local title = wezterm.truncate_right(named or tab_title(tab), max_width - 6)
 
 	return {
 		{ Background = { Color = background } },
-		{ Foreground = { Color = tab.is_active and ui.blue or background } },
+		{ Foreground = { Color = tab.is_active and shell.color or background } },
 		{ Text = edge },
+		{ Foreground = { Color = shell.color } },
+		{ Text = icon .. ' ' },
 		{ Foreground = { Color = foreground } },
-		{ Text = icon .. (tab.tab_index + 1) .. ' ' .. title .. ' ' },
+		{ Text = (tab.tab_index + 1) .. ' ' .. title .. ' ' },
 	}
 end
 )
