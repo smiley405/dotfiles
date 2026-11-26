@@ -168,6 +168,19 @@ local function tab_shell(pane)
 	return SHELL
 end
 
+-- A wash of the shell's colour over the tab, faint enough that the icon stays
+-- the loudest thing on it and the text keeps its contrast.
+local TAB_TINT = 0.12
+local function tint(color, base)
+	local function rgb(h)
+		return tonumber(h:sub(2, 3), 16), tonumber(h:sub(4, 5), 16), tonumber(h:sub(6, 7), 16)
+	end
+	local r1, g1, b1 = rgb(color)
+	local r2, g2, b2 = rgb(base)
+	local function m(a, b) return math.floor(a * TAB_TINT + b * (1 - TAB_TINT) + 0.5) end
+	return string.format('#%02X%02X%02X', m(r1, r2), m(g1, g2), m(b1, b2))
+end
+
 -- Returns the program and, when the title carried it, the name to show.
 local function tab_program(tab)
 	local pane = tab.active_pane
@@ -204,6 +217,7 @@ function(tab, tabs, panes, config, hover, max_width)
 	local program, named = tab_program(tab)
 	local shell = tab_shell(tab.active_pane)
 	local icon = program and PROGRAM_ICONS[program] or shell.icon
+	background = tint(shell.color, background)
 
 	-- numbered because SHIFT+CTRL+<n> jumps to a tab
 	local title = wezterm.truncate_right(named or tab_title(tab), max_width - 6)
