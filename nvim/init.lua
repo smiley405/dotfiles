@@ -18,6 +18,8 @@ local eager = {
 	'noice',
 	'hardmode',
 	'rooter',
+	-- ahead of 'lualine', which draws the file-type icon
+	'devicons',
 	'lualine',
 	'undotree',
 }
